@@ -1,0 +1,216 @@
+@import "tailwindcss" source(none);
+@source "../src";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+/*
+ * Bakebook Bakery — Design System
+ * Source of truth: Bakebook Brand Guidelines (26 May 2026)
+ *
+ * Visual balance: 90% white / 8% black / 2% Bakebook Blue.
+ * Blue is reserved for active states, key CTAs, and brand moments —
+ * never a primary background. Layouts breathe; typography leads.
+ */
+
+@theme inline {
+  --radius-sm: 2px;
+  --radius-md: 4px;
+  --radius-lg: 6px;
+  --radius-xl: 10px;
+  --radius-2xl: 14px;
+  --radius-3xl: 20px;
+  --radius-4xl: 28px;
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-ring-offset-background: var(--background);
+
+  --color-bakebook-blue: var(--bakebook-blue);
+  --color-bakebook-ink: var(--bakebook-ink);
+  --color-bakebook-bone: var(--bakebook-bone);
+  --color-bakebook-coral: var(--bakebook-coral);
+
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+
+  --font-display: "Inter Tight", "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+}
+
+:root {
+  --radius: 0.25rem;
+
+  /* Bakebook brand */
+  --bakebook-blue: oklch(0.74 0.18 234);      /* #00AEEF */
+  --bakebook-ink: oklch(0.16 0 0);            /* near-black */
+  --bakebook-bone: oklch(0.965 0.002 247);    /* #F0F1F1 */
+  --bakebook-coral: oklch(0.71 0.20 35);      /* #FF6647 */
+
+  --background: oklch(1 0 0);
+  --foreground: var(--bakebook-ink);
+
+  --card: oklch(1 0 0);
+  --card-foreground: var(--bakebook-ink);
+  --popover: oklch(1 0 0);
+  --popover-foreground: var(--bakebook-ink);
+
+  --primary: var(--bakebook-ink);
+  --primary-foreground: oklch(1 0 0);
+  --secondary: var(--bakebook-bone);
+  --secondary-foreground: var(--bakebook-ink);
+
+  --muted: var(--bakebook-bone);
+  --muted-foreground: oklch(0.48 0 0);
+  --accent: var(--bakebook-blue);
+  --accent-foreground: oklch(1 0 0);
+
+  --destructive: oklch(0.577 0.245 27.325);
+  --destructive-foreground: oklch(1 0 0);
+
+  --border: oklch(0.92 0 0);
+  --input: oklch(0.92 0 0);
+  --ring: var(--bakebook-blue);
+
+  --chart-1: var(--bakebook-blue);
+  --chart-2: var(--bakebook-ink);
+  --chart-3: var(--bakebook-coral);
+  --chart-4: oklch(0.6 0.118 184.704);
+  --chart-5: oklch(0.769 0.188 70.08);
+
+  --sidebar: oklch(1 0 0);
+  --sidebar-foreground: var(--bakebook-ink);
+  --sidebar-primary: var(--bakebook-ink);
+  --sidebar-primary-foreground: oklch(1 0 0);
+  --sidebar-accent: var(--bakebook-bone);
+  --sidebar-accent-foreground: var(--bakebook-ink);
+  --sidebar-border: oklch(0.92 0 0);
+  --sidebar-ring: var(--bakebook-blue);
+}
+
+.dark {
+  --background: var(--bakebook-ink);
+  --foreground: oklch(1 0 0);
+  --card: var(--bakebook-ink);
+  --card-foreground: oklch(1 0 0);
+  --popover: var(--bakebook-ink);
+  --popover-foreground: oklch(1 0 0);
+  --primary: oklch(1 0 0);
+  --primary-foreground: var(--bakebook-ink);
+  --secondary: oklch(0.22 0 0);
+  --secondary-foreground: oklch(1 0 0);
+  --muted: oklch(0.22 0 0);
+  --muted-foreground: oklch(0.72 0 0);
+  --accent: var(--bakebook-blue);
+  --accent-foreground: oklch(1 0 0);
+  --border: oklch(1 0 0 / 12%);
+  --input: oklch(1 0 0 / 14%);
+  --ring: var(--bakebook-blue);
+}
+
+@layer base {
+  * {
+    border-color: var(--color-border);
+  }
+
+  html {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+
+  body {
+    background-color: var(--color-background);
+    color: var(--color-foreground);
+    font-family: var(--font-sans);
+    font-feature-settings: "ss01", "cv11";
+  }
+
+  ::selection {
+    background-color: var(--color-bakebook-blue);
+    color: oklch(1 0 0);
+  }
+}
+
+@utility font-display {
+  font-family: var(--font-display);
+  font-feature-settings: "ss01";
+  letter-spacing: -0.02em;
+}
+
+/* Editorial display caps — used for huge headlines à la Concept 10 */
+@utility display-caps {
+  font-family: var(--font-display);
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: -0.015em;
+  line-height: 0.92;
+}
+
+/* Small editorial label — top corners, captions, eyebrows */
+@utility editorial-label {
+  font-family: var(--font-sans);
+  font-size: 0.6875rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+}
+
+/* Hairline underline-on-hover link, used in nav */
+@utility quiet-link {
+  position: relative;
+  display: inline-block;
+  transition: color 200ms ease;
+}
+@utility quiet-link-underline {
+  position: relative;
+  display: inline-block;
+}
+
+/* Film grain overlay — apply class="grain" on a relative parent */
+@layer utilities {
+  .grain {
+    position: relative;
+    isolation: isolate;
+  }
+  .grain::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 2;
+    opacity: 0.28;
+    mix-blend-mode: overlay;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='260' height='260'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0.95 0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+    background-size: 260px 260px;
+  }
+  .grain-strong::after { opacity: 0.42; }
+}
