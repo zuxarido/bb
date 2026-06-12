@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Logomark } from "@/components/Logo";
 import { Marquee } from "@/components/Marquee";
-import cupHolding from "@/assets/cup-holding.png";
+import heroVideo from "@/assets/Create_a_cinematic_luxury_webs.mp4";
 import page06 from "@/assets/page_06.png";
 import featureCoffee from "@/assets/feature-coffee.jpg";
 import featureMatcha from "@/assets/feature-matcha.jpg";
@@ -55,12 +55,13 @@ function Hero() {
     <section className="relative h-screen w-full overflow-hidden bg-muted">
       {/* Full screen background image */}
       <div className="grain grain-strong absolute inset-0 h-full w-full">
-        <img
-          src={cupHolding}
-          alt="A hand carrying two Bakebook coffees in a branded carrier"
+        <video
+          src={heroVideo}
           className="h-full w-full object-cover object-center"
-          width={1920}
-          height={1080}
+          autoPlay
+          loop
+          muted
+          playsInline
         />
         {/* Vignette/overlay for readability */}
         <div className="pointer-events-none absolute inset-0 z-[1] bg-gradient-to-t from-black/50 via-transparent to-black/30" />
