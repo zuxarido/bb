@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as ContactRouteImport } from './routes/contact'
+import { Route as CakeryV2RouteImport } from './routes/cakery-v2'
 import { Route as CakeryRouteImport } from './routes/cakery'
 import { Route as CafeRouteImport } from './routes/cafe'
 import { Route as AboutRouteImport } from './routes/about'
@@ -18,6 +19,11 @@ import { Route as IndexRouteImport } from './routes/index'
 const ContactRoute = ContactRouteImport.update({
   id: '/contact',
   path: '/contact',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CakeryV2Route = CakeryV2RouteImport.update({
+  id: '/cakery-v2',
+  path: '/cakery-v2',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CakeryRoute = CakeryRouteImport.update({
@@ -46,6 +52,7 @@ export interface FileRoutesByFullPath {
   '/about': typeof AboutRoute
   '/cafe': typeof CafeRoute
   '/cakery': typeof CakeryRoute
+  '/cakery-v2': typeof CakeryV2Route
   '/contact': typeof ContactRoute
 }
 export interface FileRoutesByTo {
@@ -53,6 +60,7 @@ export interface FileRoutesByTo {
   '/about': typeof AboutRoute
   '/cafe': typeof CafeRoute
   '/cakery': typeof CakeryRoute
+  '/cakery-v2': typeof CakeryV2Route
   '/contact': typeof ContactRoute
 }
 export interface FileRoutesById {
@@ -61,14 +69,22 @@ export interface FileRoutesById {
   '/about': typeof AboutRoute
   '/cafe': typeof CafeRoute
   '/cakery': typeof CakeryRoute
+  '/cakery-v2': typeof CakeryV2Route
   '/contact': typeof ContactRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/about' | '/cafe' | '/cakery' | '/contact'
+  fullPaths: '/' | '/about' | '/cafe' | '/cakery' | '/cakery-v2' | '/contact'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/about' | '/cafe' | '/cakery' | '/contact'
-  id: '__root__' | '/' | '/about' | '/cafe' | '/cakery' | '/contact'
+  to: '/' | '/about' | '/cafe' | '/cakery' | '/cakery-v2' | '/contact'
+  id:
+    | '__root__'
+    | '/'
+    | '/about'
+    | '/cafe'
+    | '/cakery'
+    | '/cakery-v2'
+    | '/contact'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -76,6 +92,7 @@ export interface RootRouteChildren {
   AboutRoute: typeof AboutRoute
   CafeRoute: typeof CafeRoute
   CakeryRoute: typeof CakeryRoute
+  CakeryV2Route: typeof CakeryV2Route
   ContactRoute: typeof ContactRoute
 }
 
@@ -86,6 +103,13 @@ declare module '@tanstack/react-router' {
       path: '/contact'
       fullPath: '/contact'
       preLoaderRoute: typeof ContactRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/cakery-v2': {
+      id: '/cakery-v2'
+      path: '/cakery-v2'
+      fullPath: '/cakery-v2'
+      preLoaderRoute: typeof CakeryV2RouteImport
       parentRoute: typeof rootRouteImport
     }
     '/cakery': {
@@ -124,6 +148,7 @@ const rootRouteChildren: RootRouteChildren = {
   AboutRoute: AboutRoute,
   CafeRoute: CafeRoute,
   CakeryRoute: CakeryRoute,
+  CakeryV2Route: CakeryV2Route,
   ContactRoute: ContactRoute,
 }
 export const routeTree = rootRouteImport
