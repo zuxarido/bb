@@ -68,6 +68,20 @@ function CakeryPage() {
     setIsMounted(true);
   }, []);
 
+  // Sync cart count with global SiteHeader
+  useEffect(() => {
+    const count = cart.reduce((sum, item) => sum + item.quantity, 0);
+    localStorage.setItem("bakebook-cart-count", String(count));
+    window.dispatchEvent(new CustomEvent("bakebook-cart-update", { detail: count }));
+  }, [cart]);
+
+  // Listen to open-cart event from global header
+  useEffect(() => {
+    const handleOpenCart = () => setIsCartOpen(true);
+    window.addEventListener("bakebook-open-cart", handleOpenCart);
+    return () => window.removeEventListener("bakebook-open-cart", handleOpenCart);
+  }, []);
+
   const addToCart = (product: Product) => {
     if (product.category === "Custom") {
       window.open("https://wa.me/919773889591?text=Hi!%20I%20would%20like%20to%20commission%20a%20custom%20cake.", "_blank");
@@ -101,9 +115,6 @@ function CakeryPage() {
   const cartTotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
   const cartCount = cart.reduce((sum, item) => sum + item.quantity, 0);
 
-  // Recommendations: Products not currently in the cart
-  const recommendations = PRODUCTS.filter(p => !cart.some(c => c.id === p.id)).slice(0, 2);
-
   return (
     <div className="min-h-screen bg-muted text-foreground selection:bg-bakebook-blue selection:text-background">
       
@@ -132,12 +143,12 @@ function CakeryPage() {
 
       {/* Cart Sheet */}
       <Sheet open={isCartOpen} onOpenChange={setIsCartOpen}>
-        <SheetContent className="flex w-full flex-col sm:max-w-md p-0 border-l border-border bg-background shadow-2xl overflow-hidden">
-          <SheetHeader className="border-b border-border/50 p-8 pb-6 bg-background z-10">
+        <SheetContent className="flex w-full flex-col sm:max-w-md p-0 border-l border-border bg-background shadow-2xl">
+          <SheetHeader className="border-b border-border/50 p-8 pb-6">
             <SheetTitle className="display-caps text-3xl tracking-tight text-foreground">Your Bag</SheetTitle>
           </SheetHeader>
           
-          <div className="flex-1 overflow-y-auto p-8 relative">
+          <div className="flex-1 overflow-y-auto p-8">
             {cart.length === 0 ? (
               <div className="flex h-full flex-col items-center justify-center text-center animate-in fade-in duration-500">
                 <div className="rounded-full bg-muted p-6 mb-6">
@@ -180,39 +191,12 @@ function CakeryPage() {
                     </div>
                   </div>
                 ))}
-
-                {/* Recommendations Engine */}
-                {recommendations.length > 0 && (
-                  <div className="mt-4 pt-10 border-t border-border/50">
-                    <h4 className="editorial-label text-muted-foreground mb-6">You might also like</h4>
-                    <div className="flex flex-col gap-6">
-                      {recommendations.map((rec) => (
-                        <div key={rec.id} className="flex gap-4 items-center bg-muted/50 p-4 rounded-xl border border-border/30 hover:border-bakebook-blue/30 transition-colors">
-                          <div className="h-16 w-16 flex-shrink-0 overflow-hidden rounded-md">
-                            <img src={rec.image} alt={rec.name} className="h-full w-full object-cover" />
-                          </div>
-                          <div className="flex-1">
-                            <h5 className="font-display text-sm tracking-tight">{rec.name}</h5>
-                            <p className="editorial-label text-muted-foreground text-[10px] mt-1">₹{rec.price}</p>
-                          </div>
-                          <button 
-                            onClick={() => addToCart(rec)}
-                            className="h-8 w-8 flex items-center justify-center rounded-full bg-background border border-border hover:border-bakebook-blue hover:text-bakebook-blue transition-colors shadow-sm"
-                            aria-label="Add to bag"
-                          >
-                            <Plus className="h-4 w-4" />
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
               </div>
             )}
           </div>
 
           {cart.length > 0 && (
-            <div className="border-t border-border/50 p-8 bg-background shadow-[0_-10px_40px_rgba(0,0,0,0.02)] z-10">
+            <div className="border-t border-border/50 p-8 bg-background shadow-[0_-10px_40px_rgba(0,0,0,0.02)]">
               <div className="flex justify-between items-end mb-8">
                 <span className="editorial-label text-muted-foreground">Subtotal</span>
                 <span className="display-caps text-3xl tracking-tight">₹{cartTotal}</span>
@@ -246,7 +230,6 @@ function CakeryPage() {
               style={{ animationDelay: `${(idx + 1) * 150}ms` }}
             >
               <div className="relative aspect-[4/5] w-full overflow-hidden bg-background/50 rounded-2xl mb-8 shadow-sm transition-shadow duration-500 hover:shadow-xl cursor-pointer">
-                {/* Image without zoom animation on hover */}
                 <img
                   src={product.image}
                   alt={product.name}

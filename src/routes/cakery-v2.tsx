@@ -69,6 +69,20 @@ function CakeryPageV2() {
     setIsMounted(true);
   }, []);
 
+  // Sync cart count with global SiteHeader
+  useEffect(() => {
+    const count = cart.reduce((sum, item) => sum + item.quantity, 0);
+    localStorage.setItem("bakebook-cart-count", String(count));
+    window.dispatchEvent(new CustomEvent("bakebook-cart-update", { detail: count }));
+  }, [cart]);
+
+  // Listen to open-cart event from global header
+  useEffect(() => {
+    const handleOpenCart = () => setIsCartOpen(true);
+    window.addEventListener("bakebook-open-cart", handleOpenCart);
+    return () => window.removeEventListener("bakebook-open-cart", handleOpenCart);
+  }, []);
+
   const addToCart = (product: Product) => {
     if (product.category === "Custom") {
       window.open("https://wa.me/919773889591?text=Hi!%20I%20would%20like%20to%20commission%20a%20custom%20cake.", "_blank");
@@ -111,7 +125,7 @@ function CakeryPageV2() {
       <div className={`fixed bottom-8 right-8 z-50 transition-all duration-700 ease-out ${isMounted ? 'translate-y-0 opacity-100' : 'translate-y-12 opacity-0'}`}>
         <button
           onClick={() => setIsCartOpen(true)}
-          className="relative flex h-16 w-16 items-center justify-center rounded-full bg-bakebook-blue text-background shadow-2xl hover:scale-105 transition-transform duration-300 focus:outline-none focus:ring-4 focus:ring-bakebook-blue/40"
+          className="relative flex h-16 w-16 items-center justify-center rounded-full bg-bakebook-blue text-background shadow-xl hover:scale-105 transition-transform duration-300 focus:outline-none focus:ring-4 focus:ring-bakebook-blue/40"
           aria-label="Open Cart"
         >
           <ShoppingBag className="h-6 w-6" strokeWidth={2.5} />
