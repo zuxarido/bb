@@ -10,6 +10,8 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as ContactRouteImport } from './routes/contact'
+import { Route as CakeryV5RouteImport } from './routes/cakery-v5'
+import { Route as CakeryV4RouteImport } from './routes/cakery-v4'
 import { Route as CakeryV3RouteImport } from './routes/cakery-v3'
 import { Route as CakeryV2RouteImport } from './routes/cakery-v2'
 import { Route as CakeryRouteImport } from './routes/cakery'
@@ -20,6 +22,16 @@ import { Route as IndexRouteImport } from './routes/index'
 const ContactRoute = ContactRouteImport.update({
   id: '/contact',
   path: '/contact',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CakeryV5Route = CakeryV5RouteImport.update({
+  id: '/cakery-v5',
+  path: '/cakery-v5',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CakeryV4Route = CakeryV4RouteImport.update({
+  id: '/cakery-v4',
+  path: '/cakery-v4',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CakeryV3Route = CakeryV3RouteImport.update({
@@ -60,6 +72,8 @@ export interface FileRoutesByFullPath {
   '/cakery': typeof CakeryRoute
   '/cakery-v2': typeof CakeryV2Route
   '/cakery-v3': typeof CakeryV3Route
+  '/cakery-v4': typeof CakeryV4Route
+  '/cakery-v5': typeof CakeryV5Route
   '/contact': typeof ContactRoute
 }
 export interface FileRoutesByTo {
@@ -69,6 +83,8 @@ export interface FileRoutesByTo {
   '/cakery': typeof CakeryRoute
   '/cakery-v2': typeof CakeryV2Route
   '/cakery-v3': typeof CakeryV3Route
+  '/cakery-v4': typeof CakeryV4Route
+  '/cakery-v5': typeof CakeryV5Route
   '/contact': typeof ContactRoute
 }
 export interface FileRoutesById {
@@ -79,6 +95,8 @@ export interface FileRoutesById {
   '/cakery': typeof CakeryRoute
   '/cakery-v2': typeof CakeryV2Route
   '/cakery-v3': typeof CakeryV3Route
+  '/cakery-v4': typeof CakeryV4Route
+  '/cakery-v5': typeof CakeryV5Route
   '/contact': typeof ContactRoute
 }
 export interface FileRouteTypes {
@@ -90,6 +108,8 @@ export interface FileRouteTypes {
     | '/cakery'
     | '/cakery-v2'
     | '/cakery-v3'
+    | '/cakery-v4'
+    | '/cakery-v5'
     | '/contact'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -99,6 +119,8 @@ export interface FileRouteTypes {
     | '/cakery'
     | '/cakery-v2'
     | '/cakery-v3'
+    | '/cakery-v4'
+    | '/cakery-v5'
     | '/contact'
   id:
     | '__root__'
@@ -108,6 +130,8 @@ export interface FileRouteTypes {
     | '/cakery'
     | '/cakery-v2'
     | '/cakery-v3'
+    | '/cakery-v4'
+    | '/cakery-v5'
     | '/contact'
   fileRoutesById: FileRoutesById
 }
@@ -118,6 +142,8 @@ export interface RootRouteChildren {
   CakeryRoute: typeof CakeryRoute
   CakeryV2Route: typeof CakeryV2Route
   CakeryV3Route: typeof CakeryV3Route
+  CakeryV4Route: typeof CakeryV4Route
+  CakeryV5Route: typeof CakeryV5Route
   ContactRoute: typeof ContactRoute
 }
 
@@ -128,6 +154,20 @@ declare module '@tanstack/react-router' {
       path: '/contact'
       fullPath: '/contact'
       preLoaderRoute: typeof ContactRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/cakery-v5': {
+      id: '/cakery-v5'
+      path: '/cakery-v5'
+      fullPath: '/cakery-v5'
+      preLoaderRoute: typeof CakeryV5RouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/cakery-v4': {
+      id: '/cakery-v4'
+      path: '/cakery-v4'
+      fullPath: '/cakery-v4'
+      preLoaderRoute: typeof CakeryV4RouteImport
       parentRoute: typeof rootRouteImport
     }
     '/cakery-v3': {
@@ -182,6 +222,8 @@ const rootRouteChildren: RootRouteChildren = {
   CakeryRoute: CakeryRoute,
   CakeryV2Route: CakeryV2Route,
   CakeryV3Route: CakeryV3Route,
+  CakeryV4Route: CakeryV4Route,
+  CakeryV5Route: CakeryV5Route,
   ContactRoute: ContactRoute,
 }
 export const routeTree = rootRouteImport

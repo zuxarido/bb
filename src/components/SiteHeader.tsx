@@ -47,7 +47,7 @@ export function SiteHeader() {
   };
 
   const isCakeryPage = location.pathname.startsWith("/cakery");
-  const hasDarkHero = location.pathname === "/" || location.pathname === "/cakery-v2" || location.pathname === "/cakery-v3";
+  const hasDarkHero = location.pathname === "/" || location.pathname === "/cakery-v2" || location.pathname === "/cakery-v3" || location.pathname === "/cakery-v4" || location.pathname === "/cakery-v5";
 
   return (
     <header
