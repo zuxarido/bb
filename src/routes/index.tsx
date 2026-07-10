@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Logomark } from "@/components/Logo";
 import { Marquee } from "@/components/Marquee";
-import heroVideo from "@/assets/hero-bakebook-clips3.mp4";
+import heroVideo from "@/assets/hero-bakebook-clips-copy-02.mp4";
 import page06 from "@/assets/page_06.png";
 import featureCoffee from "@/assets/feature-coffee.jpg";
 import featureMatcha from "@/assets/feature-matcha.jpg";
