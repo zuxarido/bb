@@ -41,9 +41,62 @@ function Index() {
       <FeatureGrid />
       <SignatureCake />
       <Gallery />
+      <AlternativeDirections />
       <Visit />
       <Closing />
     </div>
+  );
+}
+
+function AlternativeDirections() {
+  const directions = [
+    { name: "Fresh loaf", to: "/idea1", tone: "morning" },
+    { name: "Slow roast", to: "/idea2", tone: "cut" },
+    { name: "Soft light", to: "/idea3", tone: "window" },
+    { name: "Bread shelf", to: "/idea4", tone: "shelf" },
+    { name: "Good day", to: "/idea5", tone: "drift" },
+    { name: "Hot room", to: "/idea6", tone: "monolith" },
+  ];
+
+  return (
+    <section className="border-t border-border bg-muted/30">
+      <div className="mx-auto max-w-[1600px] px-6 py-28 md:px-10 md:py-40">
+        <div className="flex flex-col gap-5 md:flex-row md:items-end md:justify-between">
+          <div>
+            <p className="editorial-label text-bakebook-blue">— alternatives</p>
+            <h2 className="mt-4 font-display text-5xl uppercase leading-[0.9] tracking-[-0.06em] text-foreground md:text-7xl">
+              six moods.
+            </h2>
+          </div>
+          <p className="max-w-md text-sm leading-relaxed text-muted-foreground">
+            warm loaf / roasted bean / soft room / good morning
+          </p>
+        </div>
+
+        <div className="mt-14 grid gap-4 md:grid-cols-3">
+          {directions.map((direction) => (
+            <Link
+              key={direction.to}
+              to={direction.to}
+              className="group relative overflow-hidden rounded-[24px] border border-border bg-background p-5 transition-transform duration-300 hover:-translate-y-1"
+            >
+              <div className="flex items-center justify-between">
+                <span className="editorial-label text-muted-foreground">{direction.tone}</span>
+                <span className="text-[0.7rem] uppercase tracking-[0.18em] text-foreground/60">view</span>
+              </div>
+              <div className="mt-10 flex min-h-[120px] items-end justify-between border-t border-border pt-5">
+                <span className="font-display text-3xl uppercase tracking-[-0.06em] text-foreground">
+                  {direction.name}
+                </span>
+                <span className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-foreground text-foreground transition-colors group-hover:bg-foreground group-hover:text-background">
+                  <Arrow />
+                </span>
+              </div>
+            </Link>
+          ))}
+        </div>
+      </div>
+    </section>
   );
 }
 

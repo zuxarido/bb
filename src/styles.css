@@ -214,3 +214,30 @@
   }
   .grain-strong::after { opacity: 0.42; }
 }
+
+@keyframes slowFloat {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
+}
+
+@keyframes driftLeft {
+  0%, 100% { transform: translateX(0px); }
+  50% { transform: translateX(-10px); }
+}
+
+@keyframes driftRight {
+  0%, 100% { transform: translateX(0px); }
+  50% { transform: translateX(10px); }
+}
+
+.ani-float-slow {
+  animation: slowFloat 7s ease-in-out infinite;
+}
+
+.ani-drift-left {
+  animation: driftLeft 10s ease-in-out infinite;
+}
+
+.ani-drift-right {
+  animation: driftRight 10s ease-in-out infinite;
+}
