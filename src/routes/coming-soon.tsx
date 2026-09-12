@@ -69,7 +69,7 @@ function ComingSoonPage() {
     };
   }, []);
 
-  const MAX_WHITE_OPACITY = 0.97;
+  const MAX_WHITE_OPACITY = 0.985;
   const whiteOpacity = renderedProgress * MAX_WHITE_OPACITY;
 
   const blueLineProgress = remap(renderedProgress, 0.45, 0.8);
@@ -102,14 +102,25 @@ function ComingSoonPage() {
   const comingX = groupStartX;
   const dotsX = groupStartX + comingWidth + gap;
   const textY = height / 2;
-  // Pushed further below the baseline than before, with a fixed pixel
-  // buffer on top of the proportional offset, so descenders (the "g" in
-  // "coming") never clip into the line.
   const underlineY = textY + fontSize * 0.55 + 10;
   const strokeWidth = Math.max(5, fontSize * 0.09);
 
   return (
     <div className="relative h-screen w-full overflow-hidden bg-black">
+      {/* This page has no header of its own. If one is still visible, it's
+          coming from a shared root/layout route rendered outside this
+          file — this rule force-hides it for as long as this page is
+          mounted, and stops as soon as you navigate away. If you'd rather
+          fix it at the source, look for wherever <SiteHeader /> is rendered
+          unconditionally (likely __root.tsx) and skip it for this route. */}
+      <style>{`
+        header { display: none !important; }
+        @keyframes scroll-hint-bounce {
+          0%, 100% { transform: translateY(0); opacity: 1; }
+          50% { transform: translateY(6px); opacity: 0.6; }
+        }
+      `}</style>
+
       <video
         src={heroVideo}
         autoPlay
@@ -215,26 +226,13 @@ function ComingSoonPage() {
         >
           Scroll
         </span>
-        <svg
-          width="32"
-          height="32"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="white"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
+        <ChevronDown
+          size={32}
+          color="white"
+          strokeWidth={2}
           style={{ animation: "scroll-hint-bounce 1.6s ease-in-out infinite" }}
-        >
-          <path d="M6 9l6 6 6-6" />
-        </svg>
+        />
       </div>
-      <style>{`
-        @keyframes scroll-hint-bounce {
-          0%, 100% { transform: translateY(0); opacity: 1; }
-          50% { transform: translateY(6px); opacity: 0.6; }
-        }
-      `}</style>
 
       <div
         ref={scrollContainerRef}
