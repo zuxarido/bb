@@ -115,26 +115,32 @@ type SceneRefs = {
   renderer?: THREE.WebGLRenderer;
   scene?: THREE.Scene;
   camera?: THREE.PerspectiveCamera;
-  solo?: THREE.Mesh;
-  minis?: THREE.Mesh[];
-  cookie?: THREE.Mesh;
+  mainGroup?: THREE.Group;
+  soloGroup?: THREE.Group;
+  miniGroup?: THREE.Group;
+  miniCookies?: THREE.Mesh[];
+  size?: Size;
   raf?: number;
-  dragging?: { mesh: THREE.Object3D; lastX: number; lastY: number } | null;
-  velocities: Map<THREE.Object3D, { x: number; y: number }>;
+  dragging?: { lastX: number; lastY: number } | null;
+  velocity: { x: number; y: number };
 };
 
 const MINI_LAYOUT = [
-  { x: -1.15, z: -0.35, r: 0.15 },
-  { x: 0.95, z: -0.55, r: -0.4 },
-  { x: -0.5, z: 0.75, r: 0.6 },
-  { x: 0.6, z: 0.85, r: -0.2 },
-  { x: 0, z: -0.05, r: 0.9 },
-  { x: -1.2, z: 0.95, r: -0.7 },
+  { x: -1.45, z: -0.45, r: 0.15 },
+  { x: 1.25, z: -0.65, r: -0.4 },
+  { x: -0.7, z: 0.95, r: 0.6 },
+  { x: 0.8, z: 1.05, r: -0.2 },
+  { x: 0, z: -0.15, r: 0.9 },
+  { x: -1.5, z: 1.15, r: -0.7 },
 ];
 
 function CookieScene({ photoUrl, size }: { photoUrl: string; size: Size }) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const stateRef = useRef<SceneRefs>({ velocities: new Map() });
+  const stateRef = useRef<SceneRefs>({ velocity: { x: 0, y: 0 } });
+
+  useEffect(() => {
+    stateRef.current.size = size;
+  }, [size]);
 
   useEffect(() => {
     const container = containerRef.current;
@@ -142,8 +148,8 @@ function CookieScene({ photoUrl, size }: { photoUrl: string; size: Size }) {
 
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(22, 1, 0.1, 100);
-    camera.position.set(0.1, 0.35, 12.2);
-    camera.lookAt(0.1, 0.1, 0);
+    camera.position.set(0, 0.4, 12.5);
+    camera.lookAt(0, 0, 0);
 
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
@@ -152,160 +158,153 @@ function CookieScene({ photoUrl, size }: { photoUrl: string; size: Size }) {
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     container.appendChild(renderer.domElement);
 
-    const sceneBackground = new THREE.Color(0xf3f3f1);
-    scene.background = sceneBackground;
-
-    scene.add(new THREE.AmbientLight(0xffffff, 0.72));
-    const key = new THREE.DirectionalLight(0xfff3dd, 1.8);
-    key.position.set(4.2, 7.2, 5.5);
+    scene.add(new THREE.AmbientLight(0xffffff, 0.85));
+    const key = new THREE.DirectionalLight(0xfff3dd, 1.9);
+    key.position.set(4.5, 7.5, 5.5);
     key.castShadow = true;
     key.shadow.mapSize.set(2048, 2048);
     scene.add(key);
-    const rim = new THREE.DirectionalLight(0xe8efff, 0.9);
-    rim.position.set(-6, 2.5, -4);
+    const rim = new THREE.DirectionalLight(0xe8efff, 0.95);
+    rim.position.set(-6, 2.8, -4);
     scene.add(rim);
-    const fill = new THREE.PointLight(0xf7d3ab, 0.8, 25, 2);
+    const fill = new THREE.PointLight(0xf7d3ab, 0.85, 25, 2);
     fill.position.set(2.4, 1.5, 4.5);
     scene.add(fill);
 
-    const makeCookieTexture = () => {
+    // Load photo texture from reference image
+    const textureLoader = new THREE.TextureLoader();
+    const photoTexture = textureLoader.load(photoUrl);
+    photoTexture.colorSpace = THREE.SRGBColorSpace;
+
+    const makeProceduralBump = () => {
       const canvas = document.createElement("canvas");
-      canvas.width = 2048;
-      canvas.height = 2048;
+      canvas.width = 1024;
+      canvas.height = 1024;
       const ctx = canvas.getContext("2d");
       if (!ctx) return new THREE.CanvasTexture(canvas);
-
-      const base = ctx.createRadialGradient(980, 760, 120, 1180, 1180, 1700);
-      base.addColorStop(0, "#f7deaa");
-      base.addColorStop(0.22, "#efc57f");
-      base.addColorStop(0.48, "#d79a5f");
-      base.addColorStop(0.78, "#b9763b");
-      base.addColorStop(1, "#8d5e30");
-      ctx.fillStyle = base;
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-      for (let i = 0; i < 12000; i += 1) {
-        const x = Math.random() * canvas.width;
-        const y = Math.random() * canvas.height;
-        const rx = 5 + Math.random() * 18;
-        const ry = 4 + Math.random() * 16;
-        const angle = Math.random() * Math.PI * 2;
-        ctx.save();
-        ctx.translate(x, y);
-        ctx.rotate(angle);
-        ctx.fillStyle = `rgba(${Math.round(128 + Math.random() * 42)}, ${Math.round(96 + Math.random() * 25)}, ${Math.round(58 + Math.random() * 20)}, ${0.10 + Math.random() * 0.22})`;
-        ctx.beginPath();
-        ctx.ellipse(0, 0, rx, ry, 0, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.restore();
-      }
-
-      for (let i = 0; i < 80; i += 1) {
-        const x = Math.random() * canvas.width;
-        const y = Math.random() * canvas.height;
-        const r = 30 + Math.random() * 220;
-        const g = ctx.createRadialGradient(x, y, 12, x, y, r);
-        g.addColorStop(0, "rgba(90,54,33,0.84)");
-        g.addColorStop(0.35, "rgba(70,41,25,0.62)");
-        g.addColorStop(1, "rgba(48,22,12,0.04)");
-        ctx.fillStyle = g;
+      ctx.fillStyle = "#808080";
+      ctx.fillRect(0, 0, 1024, 1024);
+      for (let i = 0; i < 6000; i++) {
+        const x = Math.random() * 1024;
+        const y = Math.random() * 1024;
+        const r = 2 + Math.random() * 8;
+        const val = Math.floor(Math.random() * 255);
+        ctx.fillStyle = `rgb(${val},${val},${val})`;
         ctx.beginPath();
         ctx.arc(x, y, r, 0, Math.PI * 2);
         ctx.fill();
       }
+      const tex = new THREE.CanvasTexture(canvas);
+      tex.colorSpace = THREE.NoColorSpace;
+      return tex;
+    };
+    const bumpTexture = makeProceduralBump();
 
-      const texture = new THREE.CanvasTexture(canvas);
-      texture.colorSpace = THREE.SRGBColorSpace;
-      texture.anisotropy = renderer.capabilities.getMaxAnisotropy();
-      return texture;
+    const chipMaterial = new THREE.MeshStandardMaterial({ color: 0x3d2012, roughness: 0.88, metalness: 0.05 });
+
+    const createCookieMesh = () => {
+      const geometry = new THREE.SphereGeometry(2.1, 140, 140);
+      geometry.scale(1.1, 0.72, 1.08);
+
+      const pos = geometry.attributes.position;
+      const uvs = geometry.attributes.uv;
+      const vec = new THREE.Vector3();
+
+      for (let i = 0; i < pos.count; i++) {
+        vec.fromBufferAttribute(pos, i);
+        const radial = Math.hypot(vec.x, vec.z);
+        const angular = Math.atan2(vec.z, vec.x);
+        const waveA = Math.sin(vec.x * 9.5 + vec.z * 6.5 + vec.y * 3.5) * 0.08;
+        const waveB = Math.cos(vec.y * 12 + radial * 9.5) * 0.06;
+        const softness = 1 - Math.abs(vec.y) * 0.58;
+        const radius = 1 + (waveA + waveB) * softness;
+        const nx = Math.cos(angular) * radial * radius;
+        const nz = Math.sin(angular) * radial * radius;
+        const ny = vec.y * (0.96 + Math.sin(radial * 12) * 0.025) + (waveA + waveB) * 0.05;
+        pos.setXYZ(i, nx, ny, nz);
+
+        // Map photo texture cleanly across planar coordinates
+        const u = nx / 4.4 + 0.5;
+        const v = nz / 4.4 + 0.5;
+        uvs.setXY(i, Math.max(0, Math.min(1, u)), Math.max(0, Math.min(1, v)));
+      }
+      geometry.computeVertexNormals();
+
+      const mat = new THREE.MeshPhysicalMaterial({
+        map: photoTexture,
+        bumpMap: bumpTexture,
+        bumpScale: 0.06,
+        roughness: 0.9,
+        metalness: 0.02,
+        clearcoat: 0.1,
+        clearcoatRoughness: 0.9,
+      });
+
+      const mesh = new THREE.Mesh(geometry, mat);
+      mesh.castShadow = true;
+      mesh.receiveShadow = true;
+
+      // Add 3D chocolate chip chunks on top
+      const chipPositions = [
+        [-0.9, 1.05, 0.7], [0.15, 1.38, 0.82], [0.92, 1.02, 0.15], [-1.08, 0.7, 0.12], [-0.52, 0.72, 1.18], [0.68, 0.8, 1.12],
+        [-0.98, 0.15, 0.88], [0.35, 0.2, 1.38], [0.8, 0.14, 0.85], [1.22, 0.72, -0.18], [0.24, 1.52, -0.95], [-0.38, 1.62, -0.3],
+        [1.18, 1.12, -0.78], [-1.2, 1.28, -0.72], [0.18, 0.34, -1.18], [1.05, 1.6, 0.8], [-0.9, 1.82, -0.2], [0.62, 1.88, 0.95]
+      ];
+      chipPositions.forEach(([x, y, z], index) => {
+        const chip = new THREE.Mesh(new THREE.SphereGeometry(0.28 + (index % 3) * 0.05, 20, 20), chipMaterial);
+        chip.position.set(x, y, z);
+        chip.scale.set(1.08, 0.92, 1.12);
+        chip.rotation.set(Math.random() * Math.PI, Math.random() * Math.PI, Math.random() * Math.PI);
+        mesh.add(chip);
+      });
+
+      return mesh;
     };
 
-    const cookieTexture = makeCookieTexture();
-    const doughBump = makeCookieTexture();
-    doughBump.colorSpace = THREE.NoColorSpace;
+    const mainGroup = new THREE.Group();
+    scene.add(mainGroup);
 
-    const chipMaterial = new THREE.MeshStandardMaterial({ color: 0x4a2d1d, roughness: 0.9, metalness: 0.08 });
+    // Solo Cookie Group
+    const soloGroup = new THREE.Group();
+    const soloCookie = createCookieMesh();
+    soloCookie.rotation.set(0.15, 0.7, -0.15);
+    soloGroup.add(soloCookie);
+    mainGroup.add(soloGroup);
 
-    const geometry = new THREE.SphereGeometry(2.1, 220, 220);
-    geometry.scale(1.1, 0.72, 1.08);
-    const pos = geometry.attributes.position;
-    const vec = new THREE.Vector3();
-    for (let i = 0; i < pos.count; i += 1) {
-      vec.fromBufferAttribute(pos, i);
-      const radial = Math.hypot(vec.x, vec.z);
-      const angular = Math.atan2(vec.z, vec.x);
-      const waveA = Math.sin(vec.x * 9.5 + vec.z * 6.5 + vec.y * 3.5) * 0.08;
-      const waveB = Math.cos(vec.y * 12 + radial * 9.5) * 0.06;
-      const softness = 1 - Math.abs(vec.y) * 0.58;
-      const radius = 1 + (waveA + waveB) * softness;
-      const nx = Math.cos(angular) * radial * radius;
-      const nz = Math.sin(angular) * radial * radius;
-      const ny = vec.y * (0.96 + Math.sin(radial * 12) * 0.025) + (waveA + waveB) * 0.05;
-      pos.setXYZ(i, nx, ny, nz);
-    }
-    geometry.computeVertexNormals();
-
-    const cookie = new THREE.Mesh(
-      geometry,
-      new THREE.MeshPhysicalMaterial({
-        map: cookieTexture,
-        bumpMap: doughBump,
-        bumpScale: 0.06,
-        roughness: 0.92,
-        metalness: 0.03,
-        clearcoat: 0.11,
-        clearcoatRoughness: 0.95,
-      })
-    );
-    cookie.castShadow = true;
-    cookie.receiveShadow = true;
-    cookie.rotation.set(0.12, 0.8, -0.22);
-    cookie.position.set(0, 0.2, 0);
-    scene.add(cookie);
-
-    const chipPositions = [
-      [-0.9, 1.05, 0.7], [0.15, 1.38, 0.82], [0.92, 1.02, 0.15], [-1.08, 0.7, 0.12], [-0.52, 0.72, 1.18], [0.68, 0.8, 1.12],
-      [-0.98, 0.15, 0.88], [0.35, 0.2, 1.38], [0.8, 0.14, 0.85], [1.22, 0.72, -0.18], [0.24, 1.52, -0.95], [-0.38, 1.62, -0.3],
-      [1.18, 1.12, -0.78], [-1.2, 1.28, -0.72], [0.18, 0.34, -1.18], [1.05, 1.6, 0.8], [-0.9, 1.82, -0.2], [0.62, 1.88, 0.95],
-      [-0.22, 1.7, 1.52], [1.2, 0.75, 0.92], [-1.42, 0.72, -0.16], [0.12, 0.92, -1.5], [0.96, 0.3, -1.18], [-0.5, 0.24, -1.32],
-      [0.12, 0.8, 1.76], [-1.12, 1.74, 0.56], [0.85, 1.68, -0.8], [-0.06, 1.2, -1.5], [1.38, 0.18, 0.2], [0.4, 1.9, 0.32], [-0.7, 1.96, -0.65]
-    ];
-
-    chipPositions.forEach(([x, y, z], index) => {
-      const chip = new THREE.Mesh(new THREE.SphereGeometry(0.33 + (index % 4) * 0.06, 38, 38), chipMaterial);
-      chip.position.set(x, y, z);
-      chip.scale.set(1.08, 0.92, 1.12);
-      chip.rotation.set(Math.random() * Math.PI, Math.random() * Math.PI, Math.random() * Math.PI);
-      cookie.add(chip);
+    // Mini Cookies Group (for Small size split effect)
+    const miniGroup = new THREE.Group();
+    const miniCookies: THREE.Mesh[] = [];
+    MINI_LAYOUT.forEach((layout) => {
+      const mini = createCookieMesh();
+      mini.rotation.set(layout.r, Math.random() * Math.PI, 0);
+      mini.scale.setScalar(0);
+      miniGroup.add(mini);
+      miniCookies.push(mini);
     });
+    mainGroup.add(miniGroup);
 
+    // Floor Shadow
     const shadow = new THREE.Mesh(
-      new THREE.CircleGeometry(3.8, 64),
+      new THREE.CircleGeometry(4.2, 64),
       new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.08 })
     );
     shadow.rotation.x = -Math.PI / 2;
-    shadow.position.y = -1.25;
+    shadow.position.y = -1.45;
     scene.add(shadow);
 
     stateRef.current.renderer = renderer;
     stateRef.current.scene = scene;
     stateRef.current.camera = camera;
-    stateRef.current.cookie = cookie;
-
-    const raycaster = new THREE.Raycaster();
-    const pointerNDC = new THREE.Vector2();
+    stateRef.current.mainGroup = mainGroup;
+    stateRef.current.soloGroup = soloGroup;
+    stateRef.current.miniGroup = miniGroup;
+    stateRef.current.miniCookies = miniCookies;
+    stateRef.current.size = size;
 
     function onPointerDown(e: PointerEvent) {
-      const rect = container.getBoundingClientRect();
-      pointerNDC.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
-      pointerNDC.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
-      raycaster.setFromCamera(pointerNDC, camera);
-      const hits = raycaster.intersectObject(cookie);
-      if (hits.length > 0) {
-        stateRef.current.dragging = { mesh: cookie, lastX: e.clientX, lastY: e.clientY };
-        container.setPointerCapture(e.pointerId);
-        container.style.cursor = "grabbing";
-      }
+      stateRef.current.dragging = { lastX: e.clientX, lastY: e.clientY };
+      container.setPointerCapture(e.pointerId);
+      container.style.cursor = "grabbing";
     }
 
     function onPointerMove(e: PointerEvent) {
@@ -315,9 +314,11 @@ function CookieScene({ photoUrl, size }: { photoUrl: string; size: Size }) {
       const dy = e.clientY - d.lastY;
       d.lastX = e.clientX;
       d.lastY = e.clientY;
-      cookie.rotation.y += dx * 0.013;
-      cookie.rotation.x += dy * 0.011;
-      stateRef.current.velocities.set(cookie, { x: dy * 0.011, y: dx * 0.013 });
+      if (mainGroup) {
+        mainGroup.rotation.y += dx * 0.012;
+        mainGroup.rotation.x += dy * 0.01;
+        stateRef.current.velocity = { x: dy * 0.01, y: dx * 0.012 };
+      }
     }
 
     function onPointerUp(e: PointerEvent) {
@@ -326,7 +327,7 @@ function CookieScene({ photoUrl, size }: { photoUrl: string; size: Size }) {
       try {
         container.releasePointerCapture(e.pointerId);
       } catch {
-        // pointer was already released
+        // pointer already released
       }
     }
 
@@ -348,19 +349,67 @@ function CookieScene({ photoUrl, size }: { photoUrl: string; size: Size }) {
     const ro = new ResizeObserver(resize);
     ro.observe(container);
 
-    let last = performance.now();
+    const currentSoloScale = new THREE.Vector3(1.15, 0.55, 1.15);
+    const currentMiniScales = MINI_LAYOUT.map(() => 0);
+
     const animate = (now: number) => {
-      const vel = stateRef.current.velocities.get(cookie);
+      const vel = stateRef.current.velocity;
       if (vel && !stateRef.current.dragging) {
-        cookie.rotation.x += vel.x;
-        cookie.rotation.y += vel.y;
+        mainGroup.rotation.x += vel.x;
+        mainGroup.rotation.y += vel.y;
         vel.x *= 0.94;
         vel.y *= 0.94;
       }
 
-      cookie.rotation.y += 0.0025;
-      cookie.rotation.x = 0.08 + Math.sin(now * 0.0012) * 0.08;
-      cookie.position.y = 0.2 + Math.sin(now * 0.0015) * 0.04;
+      mainGroup.rotation.y += 0.003;
+      mainGroup.position.y = Math.sin(now * 0.0015) * 0.06;
+
+      const currentSize = stateRef.current.size || "medium";
+
+      // Target scale calculation:
+      // Small -> split into cluster of mini cookies
+      // Medium -> 1 medium cookie (normal thickness)
+      // Large -> 1 big and noticeably thicker cookie
+      let targetSoloX = 1.15;
+      let targetSoloY = 0.55;
+      let targetSoloZ = 1.15;
+      let targetMiniScale = 0;
+
+      if (currentSize === "small") {
+        targetSoloX = 0;
+        targetSoloY = 0;
+        targetSoloZ = 0;
+        targetMiniScale = 0.52;
+      } else if (currentSize === "large") {
+        targetSoloX = 1.55;
+        targetSoloY = 1.15; // Noticeably thicker!
+        targetSoloZ = 1.55;
+        targetMiniScale = 0;
+      }
+
+      currentSoloScale.x += (targetSoloX - currentSoloScale.x) * 0.1;
+      currentSoloScale.y += (targetSoloY - currentSoloScale.y) * 0.1;
+      currentSoloScale.z += (targetSoloZ - currentSoloScale.z) * 0.1;
+      soloGroup.scale.copy(currentSoloScale);
+      soloGroup.visible = currentSoloScale.x > 0.01;
+
+      miniCookies.forEach((mini, i) => {
+        currentMiniScales[i] += (targetMiniScale - currentMiniScales[i]) * 0.1;
+        mini.scale.setScalar(currentMiniScales[i]);
+        mini.visible = currentMiniScales[i] > 0.01;
+
+        const layout = MINI_LAYOUT[i];
+        const targetX = currentSize === "small" ? layout.x : 0;
+        const targetY = currentSize === "small" ? (i % 2 === 0 ? 0.25 : -0.25) : 0;
+        const targetZ = currentSize === "small" ? layout.z : 0;
+
+        mini.position.x += (targetX - mini.position.x) * 0.1;
+        mini.position.y += (targetY - mini.position.y) * 0.1;
+        mini.position.z += (targetZ - mini.position.z) * 0.1;
+
+        mini.rotation.y += 0.01 + i * 0.002;
+        mini.rotation.x += 0.004;
+      });
 
       renderer.render(scene, camera);
       stateRef.current.raf = requestAnimationFrame(animate);
@@ -379,21 +428,14 @@ function CookieScene({ photoUrl, size }: { photoUrl: string; size: Size }) {
           (Array.isArray(obj.material) ? obj.material : [obj.material]).forEach((mat) => mat.dispose());
         }
       });
-      cookieTexture.dispose();
-      doughBump.dispose();
+      photoTexture.dispose();
+      bumpTexture.dispose();
       renderer.dispose();
       if (renderer.domElement.parentNode === container) {
         container.removeChild(renderer.domElement);
       }
     };
   }, [photoUrl]);
-
-  useEffect(() => {
-    const cookie = stateRef.current.cookie;
-    if (!cookie) return;
-    const target = size === "small" ? 0.8 : size === "medium" ? 1.18 : 1.45;
-    cookie.scale.setScalar(target);
-  }, [size]);
 
   return <div ref={containerRef} className="w-full h-full" />;
 }
