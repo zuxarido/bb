@@ -128,6 +128,15 @@ function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   const location = useLocation();
   const isHome = location.pathname === "/" || location.pathname.startsWith("/cakery") || location.pathname === "/about";
+  const isComingSoon = location.pathname === "/coming-soon";
+
+  if (isComingSoon) {
+    return (
+      <QueryClientProvider client={queryClient}>
+        <Outlet />
+      </QueryClientProvider>
+    );
+  }
 
   return (
     <QueryClientProvider client={queryClient}>

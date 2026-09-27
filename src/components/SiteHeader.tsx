@@ -47,25 +47,25 @@ export function SiteHeader() {
   };
 
   const isCakeryPage = location.pathname.startsWith("/cakery");
-  const hasDarkHero = location.pathname === "/" || location.pathname === "/about" || location.pathname === "/cakery-v2" || location.pathname === "/cakery-v3" || location.pathname === "/cakery-v4" || location.pathname === "/cakery-v5";
+  const hasDarkHero = (location.pathname === "/" && !scrolled) || (location.pathname === "/about" && !scrolled);
 
   return (
     <header
       className={cn(
-        "fixed inset-x-0 top-0 z-50 border-b transition-all duration-300",
+        "fixed inset-x-0 top-0 z-50 transition-all duration-500",
         headerScrolled
-          ? "border-border/70 bg-background/85 backdrop-blur-md"
-          : "border-transparent bg-transparent"
+          ? "border-b border-border/60 bg-background/80 backdrop-blur-xl py-3.5 shadow-sm"
+          : "border-transparent bg-transparent py-5"
       )}
     >
-      <div className="mx-auto flex h-16 max-w-[1600px] items-center justify-between px-6 md:grid md:h-20 md:grid-cols-3 md:px-10">
+      <div className="mx-auto flex max-w-[1600px] items-center justify-between px-6 md:grid md:grid-cols-3 md:px-10">
         
         {/* LOGO LEFT */}
         <div className="flex justify-start md:col-span-1">
           <Link to="/" className="group flex items-center gap-2" aria-label="Bakebook home">
             <span
               className={cn(
-                "font-display text-[0.95rem] font-black uppercase tracking-[0.05em] transition-colors duration-200 md:text-[1.1rem]",
+                "font-display text-[1rem] font-bold uppercase tracking-[0.06em] transition-colors duration-300 md:text-[1.15rem]",
                 headerScrolled
                   ? "text-foreground"
                   : hasDarkHero
@@ -76,12 +76,12 @@ export function SiteHeader() {
               Bakebook
             </span>
             <Logomark
-              className="h-[1.3em] w-auto translate-y-[-1px]"
+              className="h-[1.25em] w-auto translate-y-[-1px] transition-transform duration-300 group-hover:scale-110"
               color="var(--color-bakebook-blue)"
             />
             <span
               className={cn(
-                "font-display text-[0.95rem] font-black uppercase tracking-[0.05em] transition-colors duration-200 md:text-[1.1rem]",
+                "font-display text-[1rem] font-bold uppercase tracking-[0.06em] transition-colors duration-300 md:text-[1.15rem]",
                 headerScrolled
                   ? "text-foreground"
                   : hasDarkHero
@@ -95,18 +95,18 @@ export function SiteHeader() {
         </div>
 
         {/* NAVIGATION CENTER */}
-        <nav className="hidden items-center gap-8 md:flex md:justify-center md:col-span-1">
+        <nav className="hidden items-center gap-10 md:flex md:justify-center md:col-span-1">
           {NAV.map((item) => (
             <Link
               key={item.to}
               to={item.to}
               className={cn(
-                "editorial-label tracking-[0.15em] text-[0.7rem] font-semibold transition-colors duration-200",
+                "poilane-link editorial-label tracking-[0.18em] text-[0.7rem] font-medium transition-colors duration-300",
                 headerScrolled
-                  ? "text-foreground/80 hover:text-foreground"
+                  ? "text-foreground/80 hover:text-bakebook-blue"
                   : hasDarkHero
-                    ? "text-white/80 hover:text-white"
-                    : "text-foreground/80 hover:text-foreground"
+                    ? "text-white/85 hover:text-white"
+                    : "text-foreground/80 hover:text-bakebook-blue"
               )}
             >
               {item.label}
@@ -120,60 +120,61 @@ export function SiteHeader() {
             <button
               onClick={handleBasketClick}
               className={cn(
-                "editorial-label rounded-full border px-5 py-2 text-[0.7rem] font-semibold tracking-[0.12em] transition-all duration-300",
+                "editorial-label rounded-full border px-5 py-2 text-[0.7rem] font-semibold tracking-[0.12em] transition-all duration-300 shadow-sm",
                 headerScrolled
-                  ? "border-foreground text-foreground hover:bg-foreground hover:text-background"
+                  ? "border-foreground text-foreground hover:bg-bakebook-blue hover:border-bakebook-blue hover:text-white"
                   : hasDarkHero
                     ? "border-white text-white hover:bg-white hover:text-black"
-                    : "border-foreground text-foreground hover:bg-foreground hover:text-background"
+                    : "border-foreground text-foreground hover:bg-bakebook-blue hover:border-bakebook-blue hover:text-white"
               )}
             >
               Basket ({cartCount})
             </button>
           ) : (
-            <a
-              href="/cakery"
+            <Link
+              to="/cakery"
               className={cn(
-                "editorial-label rounded-full border px-5 py-2 text-[0.7rem] font-semibold tracking-[0.12em] transition-all duration-300 hidden md:inline-flex",
+                "editorial-label rounded-full border px-6 py-2.5 text-[0.7rem] font-semibold tracking-[0.14em] transition-all duration-300 hidden md:inline-flex shadow-sm",
                 headerScrolled
-                  ? "border-foreground text-foreground hover:bg-foreground hover:text-background"
+                  ? "border-foreground bg-foreground text-background hover:bg-bakebook-blue hover:border-bakebook-blue hover:text-white"
                   : hasDarkHero
-                    ? "border-white text-white hover:bg-white hover:text-black"
-                    : "border-foreground text-foreground hover:bg-foreground hover:text-background"
+                    ? "border-white bg-white text-black hover:bg-bakebook-blue hover:border-bakebook-blue hover:text-white"
+                    : "border-foreground bg-foreground text-background hover:bg-bakebook-blue hover:border-bakebook-blue hover:text-white"
               )}
             >
-              Order Now
-            </a>
+              Order Online
+            </Link>
           )}
 
+          {/* Mobile Hamburger Button */}
           <button
             type="button"
             onClick={() => setOpen((v) => !v)}
             aria-label="Menu"
             aria-expanded={open}
-            className="grid h-10 w-10 place-items-center md:hidden"
+            className="grid h-10 w-10 place-items-center md:hidden focus:outline-none"
           >
-            <span className="relative block h-3 w-5">
+            <span className="relative block h-3.5 w-6">
               <span
                 className={cn(
-                  "absolute left-0 right-0 top-0 h-px transition-transform duration-200",
+                  "absolute left-0 right-0 top-0 h-[1.5px] transition-transform duration-300 ease-out",
                   headerScrolled
                     ? "bg-foreground"
                     : hasDarkHero
                       ? "bg-white"
                       : "bg-foreground",
-                  open && "translate-y-[6px] rotate-45"
+                  open && "translate-y-[6.5px] rotate-45"
                 )}
               />
               <span
                 className={cn(
-                  "absolute bottom-0 left-0 right-0 h-px transition-transform duration-200",
+                  "absolute bottom-0 left-0 right-0 h-[1.5px] transition-transform duration-300 ease-out",
                   headerScrolled
                     ? "bg-foreground"
                     : hasDarkHero
                       ? "bg-white"
                       : "bg-foreground",
-                  open && "-translate-y-[6px] -rotate-45"
+                  open && "-translate-y-[6.5px] -rotate-45"
                 )}
               />
             </span>
@@ -181,45 +182,48 @@ export function SiteHeader() {
         </div>
       </div>
 
-      {/* Mobile sheet */}
+      {/* Mobile Drawer Overlay */}
       <div
         className={cn(
-          "overflow-hidden border-t border-border/70 bg-background transition-[max-height] duration-300 md:hidden",
-          open ? "max-h-[80vh]" : "max-h-0"
+          "overflow-hidden border-b border-border/70 bg-background/95 backdrop-blur-2xl transition-all duration-500 ease-out md:hidden",
+          open ? "max-h-[85vh] opacity-100" : "max-h-0 opacity-0"
         )}
       >
-        <div className="flex flex-col gap-6 px-6 py-10">
+        <div className="flex flex-col gap-6 px-8 py-12">
+          <span className="editorial-label text-bakebook-blue">— Navigation</span>
           {NAV.map((item) => (
             <Link
               key={item.to}
               to={item.to}
               onClick={() => setOpen(false)}
-              className="font-display text-3xl font-medium tracking-tight"
+              className="font-display text-4xl font-medium tracking-tight text-foreground transition-colors hover:text-bakebook-blue"
             >
               {item.label}
             </Link>
           ))}
-          {isCakeryPage ? (
-            <button
-              onClick={() => {
-                setOpen(false);
-                handleBasketClick();
-              }}
-              className="editorial-label mt-4 inline-block self-start border border-foreground px-5 py-3 text-foreground"
-            >
-              Basket ({cartCount})
-            </button>
-          ) : (
-            <a
-              href="/cakery"
-              className="editorial-label mt-4 inline-block self-start border border-foreground px-5 py-3 text-foreground"
-            >
-              Order Now
-            </a>
-          )}
+          <div className="pt-6 border-t border-border/60">
+            {isCakeryPage ? (
+              <button
+                onClick={() => {
+                  setOpen(false);
+                  handleBasketClick();
+                }}
+                className="editorial-label w-full rounded-full bg-bakebook-blue px-6 py-4 text-center font-bold text-white shadow-md"
+              >
+                Basket ({cartCount})
+              </button>
+            ) : (
+              <Link
+                to="/cakery"
+                onClick={() => setOpen(false)}
+                className="editorial-label block w-full rounded-full bg-bakebook-blue px-6 py-4 text-center font-bold text-white shadow-md"
+              >
+                Order Online
+              </Link>
+            )}
+          </div>
         </div>
       </div>
     </header>
   );
 }
-

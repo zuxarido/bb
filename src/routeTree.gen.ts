@@ -9,7 +9,14 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as Idea6RouteImport } from './routes/idea6'
+import { Route as Idea5RouteImport } from './routes/idea5'
+import { Route as Idea4RouteImport } from './routes/idea4'
+import { Route as Idea3RouteImport } from './routes/idea3'
+import { Route as Idea2RouteImport } from './routes/idea2'
+import { Route as Idea1RouteImport } from './routes/idea1'
 import { Route as ContactRouteImport } from './routes/contact'
+import { Route as ComingSoonRouteImport } from './routes/coming-soon'
 import { Route as CakeryV5RouteImport } from './routes/cakery-v5'
 import { Route as CakeryV4RouteImport } from './routes/cakery-v4'
 import { Route as CakeryV3RouteImport } from './routes/cakery-v3'
@@ -19,9 +26,44 @@ import { Route as CafeRouteImport } from './routes/cafe'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as IndexRouteImport } from './routes/index'
 
+const Idea6Route = Idea6RouteImport.update({
+  id: '/idea6',
+  path: '/idea6',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const Idea5Route = Idea5RouteImport.update({
+  id: '/idea5',
+  path: '/idea5',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const Idea4Route = Idea4RouteImport.update({
+  id: '/idea4',
+  path: '/idea4',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const Idea3Route = Idea3RouteImport.update({
+  id: '/idea3',
+  path: '/idea3',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const Idea2Route = Idea2RouteImport.update({
+  id: '/idea2',
+  path: '/idea2',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const Idea1Route = Idea1RouteImport.update({
+  id: '/idea1',
+  path: '/idea1',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ContactRoute = ContactRouteImport.update({
   id: '/contact',
   path: '/contact',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ComingSoonRoute = ComingSoonRouteImport.update({
+  id: '/coming-soon',
+  path: '/coming-soon',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CakeryV5Route = CakeryV5RouteImport.update({
@@ -74,7 +116,14 @@ export interface FileRoutesByFullPath {
   '/cakery-v3': typeof CakeryV3Route
   '/cakery-v4': typeof CakeryV4Route
   '/cakery-v5': typeof CakeryV5Route
+  '/coming-soon': typeof ComingSoonRoute
   '/contact': typeof ContactRoute
+  '/idea1': typeof Idea1Route
+  '/idea2': typeof Idea2Route
+  '/idea3': typeof Idea3Route
+  '/idea4': typeof Idea4Route
+  '/idea5': typeof Idea5Route
+  '/idea6': typeof Idea6Route
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -85,7 +134,14 @@ export interface FileRoutesByTo {
   '/cakery-v3': typeof CakeryV3Route
   '/cakery-v4': typeof CakeryV4Route
   '/cakery-v5': typeof CakeryV5Route
+  '/coming-soon': typeof ComingSoonRoute
   '/contact': typeof ContactRoute
+  '/idea1': typeof Idea1Route
+  '/idea2': typeof Idea2Route
+  '/idea3': typeof Idea3Route
+  '/idea4': typeof Idea4Route
+  '/idea5': typeof Idea5Route
+  '/idea6': typeof Idea6Route
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -97,7 +153,14 @@ export interface FileRoutesById {
   '/cakery-v3': typeof CakeryV3Route
   '/cakery-v4': typeof CakeryV4Route
   '/cakery-v5': typeof CakeryV5Route
+  '/coming-soon': typeof ComingSoonRoute
   '/contact': typeof ContactRoute
+  '/idea1': typeof Idea1Route
+  '/idea2': typeof Idea2Route
+  '/idea3': typeof Idea3Route
+  '/idea4': typeof Idea4Route
+  '/idea5': typeof Idea5Route
+  '/idea6': typeof Idea6Route
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -110,7 +173,14 @@ export interface FileRouteTypes {
     | '/cakery-v3'
     | '/cakery-v4'
     | '/cakery-v5'
+    | '/coming-soon'
     | '/contact'
+    | '/idea1'
+    | '/idea2'
+    | '/idea3'
+    | '/idea4'
+    | '/idea5'
+    | '/idea6'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -121,7 +191,14 @@ export interface FileRouteTypes {
     | '/cakery-v3'
     | '/cakery-v4'
     | '/cakery-v5'
+    | '/coming-soon'
     | '/contact'
+    | '/idea1'
+    | '/idea2'
+    | '/idea3'
+    | '/idea4'
+    | '/idea5'
+    | '/idea6'
   id:
     | '__root__'
     | '/'
@@ -132,7 +209,14 @@ export interface FileRouteTypes {
     | '/cakery-v3'
     | '/cakery-v4'
     | '/cakery-v5'
+    | '/coming-soon'
     | '/contact'
+    | '/idea1'
+    | '/idea2'
+    | '/idea3'
+    | '/idea4'
+    | '/idea5'
+    | '/idea6'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -144,16 +228,72 @@ export interface RootRouteChildren {
   CakeryV3Route: typeof CakeryV3Route
   CakeryV4Route: typeof CakeryV4Route
   CakeryV5Route: typeof CakeryV5Route
+  ComingSoonRoute: typeof ComingSoonRoute
   ContactRoute: typeof ContactRoute
+  Idea1Route: typeof Idea1Route
+  Idea2Route: typeof Idea2Route
+  Idea3Route: typeof Idea3Route
+  Idea4Route: typeof Idea4Route
+  Idea5Route: typeof Idea5Route
+  Idea6Route: typeof Idea6Route
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/idea6': {
+      id: '/idea6'
+      path: '/idea6'
+      fullPath: '/idea6'
+      preLoaderRoute: typeof Idea6RouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/idea5': {
+      id: '/idea5'
+      path: '/idea5'
+      fullPath: '/idea5'
+      preLoaderRoute: typeof Idea5RouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/idea4': {
+      id: '/idea4'
+      path: '/idea4'
+      fullPath: '/idea4'
+      preLoaderRoute: typeof Idea4RouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/idea3': {
+      id: '/idea3'
+      path: '/idea3'
+      fullPath: '/idea3'
+      preLoaderRoute: typeof Idea3RouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/idea2': {
+      id: '/idea2'
+      path: '/idea2'
+      fullPath: '/idea2'
+      preLoaderRoute: typeof Idea2RouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/idea1': {
+      id: '/idea1'
+      path: '/idea1'
+      fullPath: '/idea1'
+      preLoaderRoute: typeof Idea1RouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/contact': {
       id: '/contact'
       path: '/contact'
       fullPath: '/contact'
       preLoaderRoute: typeof ContactRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/coming-soon': {
+      id: '/coming-soon'
+      path: '/coming-soon'
+      fullPath: '/coming-soon'
+      preLoaderRoute: typeof ComingSoonRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/cakery-v5': {
@@ -224,7 +364,14 @@ const rootRouteChildren: RootRouteChildren = {
   CakeryV3Route: CakeryV3Route,
   CakeryV4Route: CakeryV4Route,
   CakeryV5Route: CakeryV5Route,
+  ComingSoonRoute: ComingSoonRoute,
   ContactRoute: ContactRoute,
+  Idea1Route: Idea1Route,
+  Idea2Route: Idea2Route,
+  Idea3Route: Idea3Route,
+  Idea4Route: Idea4Route,
+  Idea5Route: Idea5Route,
+  Idea6Route: Idea6Route,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
