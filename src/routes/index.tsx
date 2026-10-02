@@ -3,7 +3,6 @@ import { HeroSection } from "@/components/poilane/HeroSection";
 import { AboutSection } from "@/components/poilane/AboutSection";
 import { OurProductsSection } from "@/components/poilane/OurProductsSection";
 import { LatestLaunchesSection } from "@/components/poilane/LatestLaunchesSection";
-import { BestSellersSection } from "@/components/poilane/BestSellersSection";
 import { InstagramSection } from "@/components/poilane/InstagramSection";
 import { ScrollReveal } from "@/components/poilane/ScrollReveal";
 import { Logomark } from "@/components/Logo";
@@ -30,22 +29,17 @@ export const Route = createFileRoute("/")({
 function IndexPage() {
   return (
     <div className="w-full bg-background text-foreground selection:bg-bakebook-blue selection:text-white">
-      {/* 1. Hero / Opening Section */}
+      {/* 1. Hero / Video */}
       <HeroSection />
 
-      {/* 2. About Us / Bakebook Story */}
-      <AboutSection />
-
-      {/* 3. Products / Our Products (Exact Poilâne "Nos produits" Layout) */}
-      <OurProductsSection />
-
-      {/* 4. Our Latest Launches */}
+      {/* 2. Our Latest Launches */}
       <LatestLaunchesSection />
 
-      {/* 5. Best Sellers */}
-      <BestSellersSection />
+      {/* 3. Our Products */}
+      <OurProductsSection />
 
-      {/* 6. Instagram Showcase */}
+      {/* 4. About Us / Bakebook Story + Instagram */}
+      <AboutSection />
       <InstagramSection />
     </div>
   );

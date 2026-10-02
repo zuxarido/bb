@@ -62,17 +62,17 @@ const BEST_SELLERS = [
 
 export function BestSellersSection() {
   return (
-    <section className="bg-muted/30 py-20 md:py-32 border-t border-border">
-      <div className="mx-auto max-w-[1600px] px-6 md:px-10 lg:px-12">
+    <section className="bg-muted/30 py-16 sm:py-20 md:py-32 border-t border-border">
+      <div className="mx-auto max-w-[1600px] px-5 sm:px-8 md:px-10 lg:px-12">
         
         {/* Section Heading */}
         <ScrollReveal variant="fade-up">
-          <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between border-b border-border pb-6">
+          <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between border-b border-border pb-5 sm:pb-6">
             <div>
               <span className="editorial-label text-bakebook-blue font-medium">
                 — BEST SELLERS
               </span>
-              <h2 className="mt-2 font-display text-4xl sm:text-5xl md:text-6xl font-medium uppercase leading-none tracking-[-0.03em] text-foreground">
+              <h2 className="mt-2 font-display text-3xl xs:text-4xl sm:text-5xl md:text-6xl font-medium uppercase leading-none tracking-[-0.03em] text-foreground">
                 BEST SELLERS
               </h2>
             </div>
@@ -84,22 +84,22 @@ export function BestSellersSection() {
         </ScrollReveal>
 
         {/* Compact Product Carousel */}
-        <div className="mt-10 md:mt-14">
+        <div className="mt-8 sm:mt-10 md:mt-14">
           <EditorialCarousel showProgress={true}>
             {BEST_SELLERS.map((item, idx) => (
               <ScrollReveal
                 key={item.id}
                 variant="fade-up"
                 delay={idx * 60}
-                className="carousel-snap-item w-[180px] sm:w-[210px] md:w-[230px] flex-shrink-0"
+                className="carousel-snap-item w-[160px] xs:w-[185px] sm:w-[210px] md:w-[230px] flex-shrink-0"
               >
                 <Link
                   to={item.link}
-                  className="group flex flex-col justify-between overflow-hidden rounded-[16px] border border-border/70 bg-background p-3.5 transition-all duration-300 hover:-translate-y-1 hover:border-bakebook-blue/40 hover:shadow-md"
+                  className="group flex h-full flex-col justify-between overflow-hidden rounded-[14px] sm:rounded-[16px] border border-border/70 bg-background p-3 sm:p-3.5 transition-all duration-300 hover:-translate-y-1 hover:border-bakebook-blue/40 hover:shadow-md active:scale-[0.98]"
                 >
                   <div>
                     {/* Compact Image */}
-                    <div className="relative aspect-square w-full overflow-hidden rounded-[12px] bg-muted/60">
+                    <div className="relative aspect-square w-full overflow-hidden rounded-[10px] sm:rounded-[12px] bg-muted/60">
                       <img
                         src={item.img}
                         alt={item.name}
@@ -109,12 +109,12 @@ export function BestSellersSection() {
                     </div>
 
                     {/* Product Info */}
-                    <div className="mt-3 space-y-0.5">
-                      <h3 className="font-display text-base font-medium tracking-tight text-foreground truncate transition-colors group-hover:text-bakebook-blue">
+                    <div className="mt-2.5 sm:mt-3 space-y-0.5">
+                      <h3 className="font-display text-sm sm:text-base font-medium tracking-tight text-foreground truncate transition-colors group-hover:text-bakebook-blue">
                         {item.name}
                       </h3>
                       <div className="flex items-center justify-between text-xs text-muted-foreground pt-0.5">
-                        <span className="text-[10px]">{item.category}</span>
+                        <span className="text-[9px] sm:text-[10px]">{item.category}</span>
                         <span className="font-display font-semibold text-foreground text-xs">
                           {item.price}
                         </span>
@@ -123,11 +123,11 @@ export function BestSellersSection() {
                   </div>
 
                   {/* Compact CTA */}
-                  <div className="mt-4 pt-2.5 border-t border-border/50 flex items-center justify-between text-[10px]">
-                    <span className="editorial-label text-muted-foreground text-[9px]">
+                  <div className="mt-3 sm:mt-4 pt-2 sm:pt-2.5 border-t border-border/50 flex items-center justify-between text-[9px] sm:text-[10px]">
+                    <span className="editorial-label text-muted-foreground text-[8px] sm:text-[9px] hidden xs:inline">
                       Classic
                     </span>
-                    <span className="poilane-link font-semibold text-foreground group-hover:text-bakebook-blue">
+                    <span className="poilane-link font-semibold text-foreground group-hover:text-bakebook-blue ml-auto">
                       Order →
                     </span>
                   </div>

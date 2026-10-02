@@ -139,7 +139,7 @@ function CakeryPageV2() {
 
       {/* Cart Sheet */}
       <Sheet open={isCartOpen} onOpenChange={setIsCartOpen}>
-        <SheetContent className="flex w-full flex-col sm:max-w-md p-0 border-l border-border bg-[#F7F5F2] shadow-2xl overflow-hidden">
+        <SheetContent className="flex w-[70vw] flex-col sm:max-w-md p-0 border-l border-border bg-[#F7F5F2] shadow-2xl overflow-hidden">
           <SheetHeader className="border-b border-border/50 p-8 pb-6 bg-[#F7F5F2] z-10">
             <SheetTitle className="display-caps text-3xl tracking-tight text-foreground">Your Bag</SheetTitle>
           </SheetHeader>

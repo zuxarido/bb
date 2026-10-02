@@ -2,7 +2,17 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useState, useEffect, useRef, useCallback, type MouseEvent } from "react";
 import * as THREE from "three";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
-import { X, ShoppingBag, Plus, Minus, Sparkles, Check } from "lucide-react";
+import {
+  X,
+  ShoppingBag,
+  Plus,
+  Minus,
+  Sparkles,
+  Check,
+  ImageIcon,
+  ArrowRight,
+  MessageCircle,
+} from "lucide-react";
 
 import imgNutellaCookie from "@/assets/product-cookie-nutella.png";
 import imgDoubleChoc from "@/assets/product-cookie-double.png";
@@ -10,20 +20,29 @@ import imgVanillaCake from "@/assets/product-cake-vanilla.png";
 import imgDevilsCake from "@/assets/product-cake-devil.png";
 import imgCookiePhoto from "@/assets/Cookie_new.png";
 import imgCookieDark from "@/assets/Cookie_dark.png";
-// Photo used to texture the 3D cookie. The project already ships with cookie art assets,
-// so the route uses those instead of the missing external file reference.
 
 export const Route = createFileRoute("/cakery")({
   head: () => ({ meta: [{ title: "The Cakery — Bakebook Bakery" }] }),
   component: CakeryPage,
 });
 
+/* ------------------------------------------------------------------ */
+/*  PRODUCT DATA                                                       */
+/*  `image` is the card photo. Set it to `null` for anything you don't */
+/*  have real product photography for yet — the shop will render a    */
+/*  clean placeholder instead of a broken image, so the page always   */
+/*  looks finished. Swap the null for an imported asset the moment    */
+/*  a real photo is ready, no other code needs to change.             */
+/* ------------------------------------------------------------------ */
+
+type Category = "Cookie" | "Cake" | "Custom";
+
 type Product = {
   id: string;
   name: string;
   price: number;
-  image: string;
-  category: "Cookie" | "Cake" | "Custom";
+  image: string | null;
+  category: Category;
   description: string;
 };
 
@@ -59,6 +78,24 @@ const PRODUCTS: Product[] = [
     image: imgDevilsCake,
     category: "Cake",
     description: "Dark, decadent chocolate sponge finished with a smooth ganache.",
+  },
+  // Example of a product listed ahead of its photography — replace `image: null`
+  // with a real import as soon as the shot exists, everything else just works.
+  {
+    id: "cake-seasonal",
+    name: "Seasonal Special",
+    price: 820,
+    image: null,
+    category: "Cake",
+    description: "A rotating monthly flavour, announced on our socials each first week.",
+  },
+  {
+    id: "custom-cake",
+    name: "Commission a Cake",
+    price: 0,
+    image: null,
+    category: "Custom",
+    description: "Tell us the occasion, flavours and size — we'll design it around you.",
   },
 ];
 
@@ -105,11 +142,69 @@ function useAnimatedNumber(target: number, duration = 320) {
   return display;
 }
 
-// ---- Real 3D cookie, textured with the product photo, draggable to spin ----
-// Colors for the crust/underside are sampled directly from the photo itself
-// (not invented) so the sides match the real cookie's tone.
-const CRUST_COLOR = 0x75503f;
-const UNDERSIDE_COLOR = 0x402c22;
+/* ------------------------------------------------------------------ */
+/*  PRODUCT PHOTO — a single place that decides real photo vs.         */
+/*  placeholder, so every card and modal in the shop looks consistent  */
+/*  whether or not photography exists yet.                             */
+/* ------------------------------------------------------------------ */
+
+function ProductPhoto({
+  src,
+  alt,
+  className = "",
+}: {
+  src?: string | null;
+  alt: string;
+  className?: string;
+}) {
+  const [failed, setFailed] = useState(false);
+
+  if (!src || failed) {
+    return (
+      <div
+        className={`flex flex-col items-center justify-center gap-3 bg-gradient-to-br from-muted to-border/40 ${className}`}
+      >
+        <ImageIcon className="h-7 w-7 text-foreground/25" strokeWidth={1.5} />
+        <span className="editorial-label text-foreground/35 text-center px-6 leading-relaxed">
+          Photo coming soon
+        </span>
+      </div>
+    );
+  }
+
+  return (
+    <img
+      src={src}
+      alt={alt}
+      draggable={false}
+      onError={() => setFailed(true)}
+      className={`object-cover ${className}`}
+    />
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/*  REAL 3D COOKIE — photorealistic procedural dough, textured with    */
+/*  the actual product photo where one is supplied. Drag to spin.      */
+/*                                                                      */
+/*  How the photo is used: the reference photo is painted onto the     */
+/*  center of the dough's UV space as the base colour, and the         */
+/*  procedural crumb/crack/sugar-dust pass is layered on top of it so  */
+/*  the geometry's folds and edges still read correctly in 3D. If a    */
+/*  cookie has no photo yet, the same procedural generator produces a  */
+/*  fully synthetic dough texture — so the model always looks finished */
+/*  even before that cookie has been photographed. Swap in a photo any */
+/*  time by adding it to COOKIE_PHOTOS; nothing else needs to change.   */
+/* ------------------------------------------------------------------ */
+
+const MINI_LAYOUT = [
+  { x: -1.5, z: -0.5, r: 0.15 },
+  { x: 1.3, z: -0.7, r: -0.4 },
+  { x: -0.75, z: 1.0, r: 0.6 },
+  { x: 0.85, z: 1.1, r: -0.2 },
+  { x: 0, z: -0.2, r: 0.9 },
+  { x: -1.55, z: 1.2, r: -0.7 },
+];
 
 type SceneRefs = {
   renderer?: THREE.WebGLRenderer;
@@ -125,16 +220,7 @@ type SceneRefs = {
   velocity: { x: number; y: number };
 };
 
-const MINI_LAYOUT = [
-  { x: -1.45, z: -0.45, r: 0.15 },
-  { x: 1.25, z: -0.65, r: -0.4 },
-  { x: -0.7, z: 0.95, r: 0.6 },
-  { x: 0.8, z: 1.05, r: -0.2 },
-  { x: 0, z: -0.15, r: 0.9 },
-  { x: -1.5, z: 1.15, r: -0.7 },
-];
-
-function CookieScene({ photoUrl, size }: { photoUrl: string; size: Size }) {
+function CookieScene({ photoUrl, size, productId }: { photoUrl?: string; size: Size; productId?: string }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const stateRef = useRef<SceneRefs>({ velocity: { x: 0, y: 0 } });
 
@@ -146,66 +232,240 @@ function CookieScene({ photoUrl, size }: { photoUrl: string; size: Size }) {
     const container = containerRef.current;
     if (!container) return;
 
+    const isDark = productId === "cookie-chocolate" || (photoUrl ?? "").includes("dark");
+    let cancelled = false;
+
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(22, 1, 0.1, 100);
-    camera.position.set(0, 0.4, 12.5);
+    camera.position.set(0, 0.35, 12.5);
     camera.lookAt(0, 0, 0);
 
-    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: "high-performance" });
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     renderer.outputColorSpace = THREE.SRGBColorSpace;
     renderer.shadowMap.enabled = true;
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     container.appendChild(renderer.domElement);
 
-    scene.add(new THREE.AmbientLight(0xffffff, 0.85));
-    const key = new THREE.DirectionalLight(0xfff3dd, 1.9);
-    key.position.set(4.5, 7.5, 5.5);
-    key.castShadow = true;
-    key.shadow.mapSize.set(2048, 2048);
-    scene.add(key);
-    const rim = new THREE.DirectionalLight(0xe8efff, 0.95);
-    rim.position.set(-6, 2.8, -4);
-    scene.add(rim);
-    const fill = new THREE.PointLight(0xf7d3ab, 0.85, 25, 2);
-    fill.position.set(2.4, 1.5, 4.5);
-    scene.add(fill);
+    scene.add(new THREE.AmbientLight(0xffffff, 0.9));
 
-    // Load photo texture from reference image
-    const textureLoader = new THREE.TextureLoader();
-    const photoTexture = textureLoader.load(photoUrl);
-    photoTexture.colorSpace = THREE.SRGBColorSpace;
+    const keyLight = new THREE.DirectionalLight(0xfff5e6, 2.2);
+    keyLight.position.set(4.5, 7.5, 5.5);
+    keyLight.castShadow = true;
+    keyLight.shadow.mapSize.set(2048, 2048);
+    keyLight.shadow.bias = -0.0001;
+    scene.add(keyLight);
 
-    const makeProceduralBump = () => {
+    const rimLight = new THREE.DirectionalLight(0xffeaad, 1.4);
+    rimLight.position.set(-6, 3, -4);
+    scene.add(rimLight);
+
+    const fillLight = new THREE.PointLight(0xdbe6ff, 0.9, 30, 2);
+    fillLight.position.set(2.5, 1.8, 4.5);
+    scene.add(fillLight);
+
+    /* ---- base dough texture: photo-first, procedural fallback ---- */
+
+    const drawProceduralDough = (ctx: CanvasRenderingContext2D, w: number, h: number) => {
+      const cx = w / 2;
+      const cy = h / 2;
+      if (isDark) {
+        const grad = ctx.createRadialGradient(cx, cy, 100, cx, cy, w / 2);
+        grad.addColorStop(0, "#28150d");
+        grad.addColorStop(0.35, "#1f0f08");
+        grad.addColorStop(0.75, "#150904");
+        grad.addColorStop(1, "#0c0402");
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, w, h);
+      } else {
+        const grad = ctx.createRadialGradient(cx, cy, 100, cx, cy, w / 2);
+        grad.addColorStop(0, "#fde6ba");
+        grad.addColorStop(0.25, "#f7cf88");
+        grad.addColorStop(0.55, "#e4a452");
+        grad.addColorStop(0.82, "#be6b24");
+        grad.addColorStop(1, "#7d3f11");
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, w, h);
+      }
+    };
+
+    const drawCrumbAndCracks = (ctx: CanvasRenderingContext2D, w: number, h: number) => {
+      const cx = w / 2;
+      const cy = h / 2;
+
+      if (isDark) {
+        for (let i = 0; i < 15000; i++) {
+          const x = Math.random() * w;
+          const y = Math.random() * h;
+          const r = 2 + Math.random() * 8;
+          ctx.fillStyle = `rgba(${Math.round(20 + Math.random() * 30)}, ${Math.round(10 + Math.random() * 15)}, ${Math.round(5 + Math.random() * 10)}, 0.16)`;
+          ctx.beginPath();
+          ctx.arc(x, y, r, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        ctx.strokeStyle = "rgba(252, 250, 245, 0.85)";
+        ctx.lineWidth = w / 146;
+        ctx.lineCap = "round";
+        for (let i = 0; i < 24; i++) {
+          const angle = (i / 24) * Math.PI * 2 + (Math.random() - 0.5) * 0.4;
+          const dist = (180 + Math.random() * 650) * (w / 2048);
+          const ex = cx + Math.cos(angle) * dist;
+          const ey = cy + Math.sin(angle) * dist;
+          ctx.beginPath();
+          ctx.moveTo(cx + (Math.random() - 0.5) * 80, cy + (Math.random() - 0.5) * 80);
+          ctx.quadraticCurveTo(
+            (cx + ex) / 2 + (Math.random() - 0.5) * 120,
+            (cy + ey) / 2 + (Math.random() - 0.5) * 120,
+            ex,
+            ey
+          );
+          ctx.stroke();
+        }
+        for (let i = 0; i < 4000; i++) {
+          const angle = Math.random() * Math.PI * 2;
+          const dist = Math.random() * (w * 0.43);
+          const x = cx + Math.cos(angle) * dist;
+          const y = cy + Math.sin(angle) * dist;
+          ctx.fillStyle = `rgba(255, 252, 248, ${0.1 + Math.random() * 0.35})`;
+          ctx.beginPath();
+          ctx.arc(x, y, 1 + Math.random() * 4, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      } else {
+        for (let i = 0; i < 20000; i++) {
+          const x = Math.random() * w;
+          const y = Math.random() * h;
+          const rx = 3 + Math.random() * 12;
+          const ry = 2 + Math.random() * 10;
+          const a = Math.random() * Math.PI * 2;
+          ctx.save();
+          ctx.translate(x, y);
+          ctx.rotate(a);
+          const isLight = Math.random() > 0.45;
+          ctx.fillStyle = isLight
+            ? `rgba(255, 248, 230, ${0.1 + Math.random() * 0.22})`
+            : `rgba(130, 68, 22, ${0.1 + Math.random() * 0.2})`;
+          ctx.beginPath();
+          ctx.ellipse(0, 0, rx, ry, 0, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.restore();
+        }
+        ctx.strokeStyle = "rgba(105, 48, 14, 0.6)";
+        ctx.lineWidth = w / 227;
+        ctx.lineCap = "round";
+        for (let i = 0; i < 18; i++) {
+          const angle = (i / 18) * Math.PI * 2 + (Math.random() - 0.5) * 0.5;
+          const dist = (220 + Math.random() * 600) * (w / 2048);
+          const ex = cx + Math.cos(angle) * dist;
+          const ey = cy + Math.sin(angle) * dist;
+          ctx.beginPath();
+          ctx.moveTo(cx + (Math.random() - 0.5) * 60, cy + (Math.random() - 0.5) * 60);
+          ctx.quadraticCurveTo(
+            (cx + ex) / 2 + (Math.random() - 0.5) * 90,
+            (cy + ey) / 2 + (Math.random() - 0.5) * 90,
+            ex,
+            ey
+          );
+          ctx.stroke();
+        }
+      }
+    };
+
+    const buildTextureCanvas = (photoImg: HTMLImageElement | null) => {
+      const canvas = document.createElement("canvas");
+      canvas.width = 2048;
+      canvas.height = 2048;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) return canvas;
+
+      drawProceduralDough(ctx, canvas.width, canvas.height);
+
+      if (photoImg) {
+        // Lay the real product photo down as the dominant base colour —
+        // cropped to a circle so it reads correctly on the round dough —
+        // then let the procedural crumb/crack pass sit on top for depth
+        // the flat photo alone can't give a bumpy 3D surface.
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(canvas.width / 2, canvas.height / 2, canvas.width * 0.47, 0, Math.PI * 2);
+        ctx.clip();
+        const scale = Math.max(canvas.width / photoImg.width, canvas.height / photoImg.height) * 1.05;
+        const iw = photoImg.width * scale;
+        const ih = photoImg.height * scale;
+        ctx.globalAlpha = 0.92;
+        ctx.drawImage(photoImg, canvas.width / 2 - iw / 2, canvas.height / 2 - ih / 2, iw, ih);
+        ctx.globalAlpha = 1;
+        ctx.restore();
+      }
+
+      ctx.save();
+      ctx.globalAlpha = photoImg ? 0.4 : 1;
+      drawCrumbAndCracks(ctx, canvas.width, canvas.height);
+      ctx.restore();
+
+      return canvas;
+    };
+
+    const makeBumpCanvas = () => {
       const canvas = document.createElement("canvas");
       canvas.width = 1024;
       canvas.height = 1024;
       const ctx = canvas.getContext("2d");
-      if (!ctx) return new THREE.CanvasTexture(canvas);
+      if (!ctx) return canvas;
       ctx.fillStyle = "#808080";
       ctx.fillRect(0, 0, 1024, 1024);
-      for (let i = 0; i < 6000; i++) {
+      for (let i = 0; i < 12000; i++) {
         const x = Math.random() * 1024;
         const y = Math.random() * 1024;
-        const r = 2 + Math.random() * 8;
+        const r = 1 + Math.random() * 7;
         const val = Math.floor(Math.random() * 255);
         ctx.fillStyle = `rgb(${val},${val},${val})`;
         ctx.beginPath();
         ctx.arc(x, y, r, 0, Math.PI * 2);
         ctx.fill();
       }
-      const tex = new THREE.CanvasTexture(canvas);
-      tex.colorSpace = THREE.NoColorSpace;
-      return tex;
+      return canvas;
     };
-    const bumpTexture = makeProceduralBump();
 
-    const chipMaterial = new THREE.MeshStandardMaterial({ color: 0x3d2012, roughness: 0.88, metalness: 0.05 });
+    const bumpTexture = new THREE.CanvasTexture(makeBumpCanvas());
+    bumpTexture.colorSpace = THREE.NoColorSpace;
 
-    const createCookieMesh = () => {
-      const geometry = new THREE.SphereGeometry(2.1, 140, 140);
-      geometry.scale(1.1, 0.72, 1.08);
+    const chipMaterial = new THREE.MeshPhysicalMaterial({
+      color: 0x24120a,
+      roughness: 0.22,
+      metalness: 0.04,
+      clearcoat: 0.35,
+      clearcoatRoughness: 0.25,
+    });
 
+    const saltMaterial = new THREE.MeshPhysicalMaterial({
+      color: 0xffffff,
+      roughness: 0.08,
+      metalness: 0.0,
+      transmission: 0.85,
+      opacity: 0.95,
+      transparent: true,
+    });
+
+    const buildDoughMaterial = (photoImg: HTMLImageElement | null) => {
+      const doughTexture = new THREE.CanvasTexture(buildTextureCanvas(photoImg));
+      doughTexture.colorSpace = THREE.SRGBColorSpace;
+      doughTexture.anisotropy = renderer.capabilities.getMaxAnisotropy();
+      return new THREE.MeshPhysicalMaterial({
+        map: doughTexture,
+        bumpMap: bumpTexture,
+        bumpScale: 0.07,
+        roughness: isDark ? 0.92 : 0.88,
+        metalness: 0.02,
+        clearcoat: 0.08,
+        clearcoatRoughness: 0.9,
+      });
+    };
+
+    const createPhotorealisticCookie = (doughMaterial: THREE.MeshPhysicalMaterial) => {
+      const cookieGroup = new THREE.Group();
+
+      const geometry = new THREE.CylinderGeometry(2.25, 2.18, 0.72, 140, 32);
       const pos = geometry.attributes.position;
       const uvs = geometry.attributes.uv;
       const vec = new THREE.Vector3();
@@ -214,79 +474,122 @@ function CookieScene({ photoUrl, size }: { photoUrl: string; size: Size }) {
         vec.fromBufferAttribute(pos, i);
         const radial = Math.hypot(vec.x, vec.z);
         const angular = Math.atan2(vec.z, vec.x);
-        const waveA = Math.sin(vec.x * 9.5 + vec.z * 6.5 + vec.y * 3.5) * 0.08;
-        const waveB = Math.cos(vec.y * 12 + radial * 9.5) * 0.06;
-        const softness = 1 - Math.abs(vec.y) * 0.58;
-        const radius = 1 + (waveA + waveB) * softness;
-        const nx = Math.cos(angular) * radial * radius;
-        const nz = Math.sin(angular) * radial * radius;
-        const ny = vec.y * (0.96 + Math.sin(radial * 12) * 0.025) + (waveA + waveB) * 0.05;
+
+        const rimNoise = Math.sin(angular * 6) * 0.12 + Math.cos(angular * 11) * 0.08 + Math.sin(angular * 17) * 0.05;
+        const domeHeight = (1 - Math.pow(radial / 2.3, 2)) * 0.28;
+        const surfaceWave = Math.sin(vec.x * 7 + vec.z * 5) * 0.04 + Math.cos(vec.z * 9) * 0.03;
+
+        let nx = vec.x * (1 + rimNoise * 0.6);
+        let nz = vec.z * (1 + rimNoise * 0.6);
+        let ny = vec.y;
+
+        if (ny > 0) {
+          ny += domeHeight + surfaceWave;
+        } else {
+          ny -= 0.04;
+        }
+
         pos.setXYZ(i, nx, ny, nz);
 
-        // Map photo texture cleanly across planar coordinates
-        const u = nx / 4.4 + 0.5;
-        const v = nz / 4.4 + 0.5;
+        const u = nx / 4.6 + 0.5;
+        const v = nz / 4.6 + 0.5;
         uvs.setXY(i, Math.max(0, Math.min(1, u)), Math.max(0, Math.min(1, v)));
       }
       geometry.computeVertexNormals();
 
-      const mat = new THREE.MeshPhysicalMaterial({
-        map: photoTexture,
-        bumpMap: bumpTexture,
-        bumpScale: 0.06,
-        roughness: 0.9,
-        metalness: 0.02,
-        clearcoat: 0.1,
-        clearcoatRoughness: 0.9,
-      });
+      const doughMesh = new THREE.Mesh(geometry, doughMaterial);
+      doughMesh.castShadow = true;
+      doughMesh.receiveShadow = true;
+      cookieGroup.add(doughMesh);
 
-      const mesh = new THREE.Mesh(geometry, mat);
-      mesh.castShadow = true;
-      mesh.receiveShadow = true;
-
-      // Add 3D chocolate chip chunks on top
-      const chipPositions = [
-        [-0.9, 1.05, 0.7], [0.15, 1.38, 0.82], [0.92, 1.02, 0.15], [-1.08, 0.7, 0.12], [-0.52, 0.72, 1.18], [0.68, 0.8, 1.12],
-        [-0.98, 0.15, 0.88], [0.35, 0.2, 1.38], [0.8, 0.14, 0.85], [1.22, 0.72, -0.18], [0.24, 1.52, -0.95], [-0.38, 1.62, -0.3],
-        [1.18, 1.12, -0.78], [-1.2, 1.28, -0.72], [0.18, 0.34, -1.18], [1.05, 1.6, 0.8], [-0.9, 1.82, -0.2], [0.62, 1.88, 0.95]
+      const chipPositions: [number, number, number][] = [
+        [-0.9, 0.45, 0.7], [0.15, 0.52, 0.82], [0.92, 0.42, 0.15], [-1.08, 0.38, 0.12], [-0.52, 0.44, 1.18], [0.68, 0.46, 1.12],
+        [-0.98, 0.32, 0.88], [0.35, 0.36, 1.38], [0.8, 0.34, 0.85], [1.22, 0.36, -0.18], [0.24, 0.48, -0.95], [-0.38, 0.50, -0.3],
+        [1.18, 0.40, -0.78], [-1.2, 0.42, -0.72], [0.18, 0.34, -1.18], [1.05, 0.48, 0.8], [-0.9, 0.52, -0.2], [0.62, 0.54, 0.95],
+        [0.0, 0.55, 0.2], [-0.4, 0.48, 0.5], [0.55, 0.46, -0.4], [-0.7, 0.42, -0.9], [1.1, 0.35, 0.4], [-0.15, 0.49, -1.25]
       ];
+
       chipPositions.forEach(([x, y, z], index) => {
-        const chip = new THREE.Mesh(new THREE.SphereGeometry(0.28 + (index % 3) * 0.05, 20, 20), chipMaterial);
-        chip.position.set(x, y, z);
-        chip.scale.set(1.08, 0.92, 1.12);
-        chip.rotation.set(Math.random() * Math.PI, Math.random() * Math.PI, Math.random() * Math.PI);
-        mesh.add(chip);
+        const isTeardrop = index % 2 === 0;
+        let chipMesh: THREE.Mesh;
+        if (isTeardrop) {
+          const chipGeom = new THREE.ConeGeometry(0.32 + (index % 3) * 0.04, 0.4, 16);
+          chipMesh = new THREE.Mesh(chipGeom, chipMaterial);
+          chipMesh.rotation.set(0.2, Math.random() * Math.PI, (Math.random() - 0.5) * 0.3);
+        } else {
+          const chunkGeom = new THREE.DodecahedronGeometry(0.3 + (index % 3) * 0.04);
+          chunkGeom.scale(1.2, 0.7, 1.1);
+          chipMesh = new THREE.Mesh(chunkGeom, chipMaterial);
+          chipMesh.rotation.set(Math.random() * Math.PI, Math.random() * Math.PI, Math.random() * Math.PI);
+        }
+        chipMesh.position.set(x, y, z);
+        chipMesh.castShadow = true;
+        cookieGroup.add(chipMesh);
       });
 
-      return mesh;
+      if (!isDark) {
+        for (let i = 0; i < 18; i++) {
+          const angle = Math.random() * Math.PI * 2;
+          const dist = 0.3 + Math.random() * 1.6;
+          const sx = Math.cos(angle) * dist;
+          const sz = Math.sin(angle) * dist;
+          const sy = 0.4 + (1 - Math.pow(dist / 2.3, 2)) * 0.26;
+          const saltGeom = new THREE.IcosahedronGeometry(0.045, 0);
+          saltGeom.scale(1.4, 0.5, 1.2);
+          const saltMesh = new THREE.Mesh(saltGeom, saltMaterial);
+          saltMesh.position.set(sx, sy, sz);
+          saltMesh.rotation.set(Math.random() * Math.PI, Math.random() * Math.PI, Math.random() * Math.PI);
+          cookieGroup.add(saltMesh);
+        }
+      }
+
+      return cookieGroup;
     };
 
     const mainGroup = new THREE.Group();
     scene.add(mainGroup);
-
-    // Solo Cookie Group
     const soloGroup = new THREE.Group();
-    const soloCookie = createCookieMesh();
-    soloCookie.rotation.set(0.15, 0.7, -0.15);
-    soloGroup.add(soloCookie);
-    mainGroup.add(soloGroup);
-
-    // Mini Cookies Group (for Small size split effect)
     const miniGroup = new THREE.Group();
-    const miniCookies: THREE.Mesh[] = [];
-    MINI_LAYOUT.forEach((layout) => {
-      const mini = createCookieMesh();
-      mini.rotation.set(layout.r, Math.random() * Math.PI, 0);
-      mini.scale.setScalar(0);
-      miniGroup.add(mini);
-      miniCookies.push(mini);
-    });
+    mainGroup.add(soloGroup);
     mainGroup.add(miniGroup);
+    const miniCookies: THREE.Mesh[] = [];
 
-    // Floor Shadow
+    const populate = (photoImg: HTMLImageElement | null) => {
+      if (cancelled) return;
+      const doughMaterial = buildDoughMaterial(photoImg);
+
+      const soloCookie = createPhotorealisticCookie(doughMaterial);
+      soloCookie.rotation.set(0.18, 0.7, -0.15);
+      soloGroup.add(soloCookie);
+
+      MINI_LAYOUT.forEach((layout) => {
+        const mini = createPhotorealisticCookie(doughMaterial);
+        mini.rotation.set(layout.r, Math.random() * Math.PI, 0);
+        mini.scale.setScalar(0);
+        miniGroup.add(mini);
+        miniCookies.push(mini as unknown as THREE.Mesh);
+      });
+    };
+
+    // Load the reference photo (if any) before building geometry, so the
+    // dough texture is painted with it from the very first frame instead
+    // of popping in after load.
+    if (photoUrl) {
+      const loader = new THREE.ImageLoader();
+      loader.setCrossOrigin("anonymous");
+      loader.load(
+        photoUrl,
+        (img) => populate(img as unknown as HTMLImageElement),
+        undefined,
+        () => populate(null)
+      );
+    } else {
+      populate(null);
+    }
+
     const shadow = new THREE.Mesh(
-      new THREE.CircleGeometry(4.2, 64),
-      new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.08 })
+      new THREE.CircleGeometry(4.4, 64),
+      new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.09 })
     );
     shadow.rotation.x = -Math.PI / 2;
     shadow.position.y = -1.45;
@@ -306,7 +609,6 @@ function CookieScene({ photoUrl, size }: { photoUrl: string; size: Size }) {
       container.setPointerCapture(e.pointerId);
       container.style.cursor = "grabbing";
     }
-
     function onPointerMove(e: PointerEvent) {
       const d = stateRef.current.dragging;
       if (!d) return;
@@ -314,13 +616,10 @@ function CookieScene({ photoUrl, size }: { photoUrl: string; size: Size }) {
       const dy = e.clientY - d.lastY;
       d.lastX = e.clientX;
       d.lastY = e.clientY;
-      if (mainGroup) {
-        mainGroup.rotation.y += dx * 0.012;
-        mainGroup.rotation.x += dy * 0.01;
-        stateRef.current.velocity = { x: dy * 0.01, y: dx * 0.012 };
-      }
+      mainGroup.rotation.y += dx * 0.012;
+      mainGroup.rotation.x += dy * 0.01;
+      stateRef.current.velocity = { x: dy * 0.01, y: dx * 0.012 };
     }
-
     function onPointerUp(e: PointerEvent) {
       stateRef.current.dragging = null;
       container.style.cursor = "grab";
@@ -349,7 +648,7 @@ function CookieScene({ photoUrl, size }: { photoUrl: string; size: Size }) {
     const ro = new ResizeObserver(resize);
     ro.observe(container);
 
-    const currentSoloScale = new THREE.Vector3(1.15, 0.55, 1.15);
+    const currentSoloScale = new THREE.Vector3(1.15, 0.65, 1.15);
     const currentMiniScales = MINI_LAYOUT.map(() => 0);
 
     const animate = (now: number) => {
@@ -365,13 +664,8 @@ function CookieScene({ photoUrl, size }: { photoUrl: string; size: Size }) {
       mainGroup.position.y = Math.sin(now * 0.0015) * 0.06;
 
       const currentSize = stateRef.current.size || "medium";
-
-      // Target scale calculation:
-      // Small -> split into cluster of mini cookies
-      // Medium -> 1 medium cookie (normal thickness)
-      // Large -> 1 big and noticeably thicker cookie
       let targetSoloX = 1.15;
-      let targetSoloY = 0.55;
+      let targetSoloY = 0.65;
       let targetSoloZ = 1.15;
       let targetMiniScale = 0;
 
@@ -382,7 +676,7 @@ function CookieScene({ photoUrl, size }: { photoUrl: string; size: Size }) {
         targetMiniScale = 0.52;
       } else if (currentSize === "large") {
         targetSoloX = 1.55;
-        targetSoloY = 1.15; // Noticeably thicker!
+        targetSoloY = 1.25;
         targetSoloZ = 1.55;
         targetMiniScale = 0;
       }
@@ -417,6 +711,7 @@ function CookieScene({ photoUrl, size }: { photoUrl: string; size: Size }) {
     stateRef.current.raf = requestAnimationFrame(animate);
 
     return () => {
+      cancelled = true;
       cancelAnimationFrame(stateRef.current.raf ?? 0);
       ro.disconnect();
       container.removeEventListener("pointerdown", onPointerDown);
@@ -428,35 +723,44 @@ function CookieScene({ photoUrl, size }: { photoUrl: string; size: Size }) {
           (Array.isArray(obj.material) ? obj.material : [obj.material]).forEach((mat) => mat.dispose());
         }
       });
-      photoTexture.dispose();
       bumpTexture.dispose();
       renderer.dispose();
       if (renderer.domElement.parentNode === container) {
         container.removeChild(renderer.domElement);
       }
     };
-  }, [photoUrl]);
+  }, [photoUrl, productId]);
 
   return <div ref={containerRef} className="w-full h-full" />;
 }
+
+/* ------------------------------------------------------------------ */
+/*  PAGE                                                                */
+/* ------------------------------------------------------------------ */
+
+const CATEGORY_TABS: Array<{ label: string; value: Category | "All" }> = [
+  { label: "Everything", value: "All" },
+  { label: "Cookies", value: "Cookie" },
+  { label: "Cakes", value: "Cake" },
+  { label: "Custom", value: "Custom" },
+];
 
 function CakeryPage() {
   const [cart, setCart] = useState<CartItem[]>([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
+  const [activeTab, setActiveTab] = useState<Category | "All">("All");
 
   useEffect(() => {
     setIsMounted(true);
   }, []);
 
-  // Sync cart count with global SiteHeader
   useEffect(() => {
     const count = cart.reduce((sum, item) => sum + item.quantity, 0);
     localStorage.setItem("bakebook-cart-count", String(count));
     window.dispatchEvent(new CustomEvent("bakebook-cart-update", { detail: count }));
   }, [cart]);
 
-  // Listen to open-cart event from global header
   useEffect(() => {
     const handleOpenCart = () => setIsCartOpen(true);
     window.addEventListener("bakebook-open-cart", handleOpenCart);
@@ -469,8 +773,6 @@ function CakeryPage() {
       return;
     }
     setCart((prev) => {
-      // Matched on id + price so two different customizations of the same
-      // cookie sit as separate lines instead of merging into a wrong price.
       const existing = prev.find((item) => item.id === product.id && item.price === unitPrice);
       if (existing) {
         return prev.map((item) =>
@@ -498,15 +800,16 @@ function CakeryPage() {
   const cartTotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
   const cartCount = cart.reduce((sum, item) => sum + item.quantity, 0);
 
-  // ---- Per-cookie detail view ----
-  const cookies = PRODUCTS.filter((p) => p.category === "Cookie");
+  const visibleProducts = activeTab === "All" ? PRODUCTS : PRODUCTS.filter((p) => p.category === activeTab);
+
+  /* ---- detail modal state (shared by cookies & cakes) ---- */
 
   const [configs, setConfigs] = useState<Record<string, CookieConfig>>({});
   const [openId, setOpenId] = useState<string | null>(null);
   const [entered, setEntered] = useState(false);
   const [origin, setOrigin] = useState<"left" | "right">("left");
   const [added, setAdded] = useState(false);
-  const closeTimeout = useRef<ReturnType<typeof setTimeout>>();
+  const closeTimeout = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
 
   const getConfig = (id: string) => configs[id] ?? DEFAULT_CONFIG;
@@ -514,6 +817,10 @@ function CakeryPage() {
     setConfigs((prev) => ({ ...prev, [id]: { ...getConfig(id), ...patch } }));
 
   const openDetail = (product: Product, e: MouseEvent) => {
+    if (product.category === "Custom") {
+      addToCart(product, 0);
+      return;
+    }
     const side: "left" | "right" = e.clientX < window.innerWidth / 2 ? "left" : "right";
     setOrigin(side);
     setConfigs((prev) => (prev[product.id] ? prev : { ...prev, [product.id]: DEFAULT_CONFIG }));
@@ -545,9 +852,14 @@ function CakeryPage() {
 
   useEffect(() => () => clearTimeout(closeTimeout.current), []);
 
-  const activeProduct = cookies.find((c) => c.id === openId) ?? null;
+  const activeProduct = PRODUCTS.find((p) => p.id === openId) ?? null;
+  const isCookie = activeProduct?.category === "Cookie";
   const activeConfig = activeProduct ? getConfig(activeProduct.id) : DEFAULT_CONFIG;
-  const unitPrice = activeProduct ? calcUnitPrice(activeProduct.price, activeConfig.size, activeConfig.tier) : 0;
+  const unitPrice = activeProduct
+    ? isCookie
+      ? calcUnitPrice(activeProduct.price, activeConfig.size, activeConfig.tier)
+      : activeProduct.price
+    : 0;
   const animatedUnitPrice = useAnimatedNumber(unitPrice);
   const animatedTotalPrice = useAnimatedNumber(unitPrice * activeConfig.qty);
 
@@ -563,13 +875,6 @@ function CakeryPage() {
 
   return (
     <div className="min-h-screen bg-muted text-foreground selection:bg-bakebook-blue selection:text-background">
-      {/* Soft Header */}
-      <header className="absolute top-0 z-40 w-full px-6 py-8 md:px-10 flex justify-center">
-        <p className="editorial-label text-bakebook-blue tracking-[0.2em] opacity-80 animate-in fade-in slide-in-from-top-4 duration-1000 ease-out fill-mode-both delay-300">
-          — Provisions for the City —
-        </p>
-      </header>
-
       {/* Floating Cart Button */}
       <div className={`fixed bottom-8 right-8 z-50 transition-all duration-700 ease-out ${isMounted ? "translate-y-0 opacity-100" : "translate-y-12 opacity-0"}`}>
         <button
@@ -588,7 +893,7 @@ function CakeryPage() {
 
       {/* Cart Sheet */}
       <Sheet open={isCartOpen} onOpenChange={setIsCartOpen}>
-        <SheetContent className="flex w-full flex-col sm:max-w-md p-0 border-l border-border bg-background shadow-2xl">
+        <SheetContent className="flex w-[70vw] flex-col sm:max-w-md p-0 border-l border-border bg-background shadow-2xl">
           <SheetHeader className="border-b border-border/50 p-8 pb-6">
             <SheetTitle className="display-caps text-3xl tracking-tight text-foreground">Your Bag</SheetTitle>
           </SheetHeader>
@@ -606,7 +911,7 @@ function CakeryPage() {
                 {cart.map((item) => (
                   <div key={`${item.id}-${item.price}`} className="flex gap-6">
                     <div className="h-28 w-24 flex-shrink-0 overflow-hidden bg-muted rounded-lg border border-border/50">
-                      <img src={item.image} alt={item.name} className="h-full w-full object-cover" />
+                      <ProductPhoto src={item.image} alt={item.name} className="h-full w-full" />
                     </div>
                     <div className="flex flex-1 flex-col justify-between py-1">
                       <div>
@@ -654,26 +959,112 @@ function CakeryPage() {
         </SheetContent>
       </Sheet>
 
-      {/* Hero Section */}
-      <section className="mx-auto w-full max-w-[1600px] px-6 pt-28 pb-10 md:px-12 text-center">
-        <h1 className="display-caps text-6xl md:text-[72px] leading-tight tracking-tighter mx-auto max-w-4xl">
-          The Cookies — Crafted to Hold
-        </h1>
-        <p className="mt-6 mx-auto max-w-2xl text-lg font-light leading-relaxed text-foreground/70">
-          Two carefully crafted cookies. Click one to step inside — spin it in your hands, customize it, make it yours.
-        </p>
+      {/* ---------------- Hero ---------------- */}
+      <section className="relative overflow-hidden border-b border-border/60">
+        <div className="mx-auto grid w-full max-w-[1600px] grid-cols-1 md:grid-cols-[1.1fr_0.9fr] items-center px-6 pt-20 pb-14 md:px-12 md:pt-28 md:pb-20 gap-12">
+          <div>
+            <p className="editorial-label text-bakebook-blue tracking-[0.2em] opacity-80">— Provisions for the City —</p>
+            <h1 className="display-caps mt-6 text-6xl md:text-[76px] leading-[0.98] tracking-tighter">
+              Baked slow.
+              <br />
+              Sold fresh, daily.
+            </h1>
+            <p className="mt-6 max-w-md text-lg font-light leading-relaxed text-foreground/70">
+              Cookies you can spin in your hand before they're even in the oven, cakes cut to order, and
+              commissions built around whatever you're celebrating.
+            </p>
+            <div className="mt-9 flex flex-wrap items-center gap-4">
+              <a
+                href="#shop"
+                className="inline-flex items-center gap-2 bg-bakebook-blue text-background py-4 px-7 rounded-full text-sm font-semibold tracking-[0.1em] uppercase shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all duration-300"
+              >
+                Start an order <ArrowRight className="h-4 w-4" />
+              </a>
+              <a
+                href="https://wa.me/919773889591"
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center gap-2 py-4 px-6 rounded-full text-sm font-medium text-foreground/70 hover:text-bakebook-blue transition-colors"
+              >
+                <MessageCircle className="h-4 w-4" /> Ask us anything
+              </a>
+            </div>
+          </div>
+
+          <div className="relative h-[340px] md:h-[440px] rounded-[28px] bg-background border border-border/50 shadow-[0_25px_60px_rgba(2,6,23,0.08)] overflow-hidden">
+            <CookieScene productId="cookie-chocchip" photoUrl={COOKIE_PHOTOS["cookie-chocchip"]} size="large" />
+            <p className="absolute bottom-5 left-1/2 -translate-x-1/2 editorial-label text-muted-foreground bg-background/80 backdrop-blur px-4 py-1.5 rounded-full border border-border/40">
+              Drag to spin
+            </p>
+          </div>
+        </div>
       </section>
 
-      {/* Cookie Grid */}
-      <section className={`mx-auto max-w-[1400px] px-6 pb-28 md:px-12 transition-all duration-500 ${openId ? "blur-sm scale-[0.98] pointer-events-none" : ""}`}>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-start">
-          {cookies.map((prod) => (
-            <CookiePreviewCard key={prod.id} product={prod} photoUrl={COOKIE_PHOTOS[prod.id]} onOpen={(e) => openDetail(prod, e)} />
+      {/* ---------------- Shop ---------------- */}
+      <section id="shop" className={`mx-auto max-w-[1400px] px-6 py-20 md:px-12 transition-all duration-500 ${openId ? "blur-sm scale-[0.98] pointer-events-none" : ""}`}>
+        <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6 mb-12">
+          <div>
+            <h2 className="display-caps text-4xl md:text-5xl tracking-tight">The Shop</h2>
+            <p className="mt-3 text-foreground/70 max-w-md">Click a cookie to customize it in 3D, or add a cake straight to your bag.</p>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {CATEGORY_TABS.map((tab) => (
+              <button
+                key={tab.value}
+                onClick={() => setActiveTab(tab.value)}
+                className={`px-5 py-2.5 rounded-full text-sm font-medium border transition-colors ${
+                  activeTab === tab.value
+                    ? "bg-bakebook-blue text-background border-bakebook-blue"
+                    : "bg-background text-foreground/70 border-border/60 hover:border-bakebook-blue/40 hover:text-bakebook-blue"
+                }`}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+          {visibleProducts.map((product) => (
+            <ShopCard
+              key={product.id}
+              product={product}
+              photoUrl={product.category === "Cookie" ? COOKIE_PHOTOS[product.id] : undefined}
+              onOpen={(e) => openDetail(product, e)}
+              onQuickAdd={product.category === "Cake" ? () => addToCart(product, product.price, 1) : undefined}
+            />
           ))}
         </div>
       </section>
 
-      {/* Detail Overlay — a real, draggable 3D cookie, opened as its own page */}
+      {/* ---------------- Footer ---------------- */}
+      <footer className="border-t border-border/60 bg-background">
+        <div className="mx-auto max-w-[1400px] px-6 py-16 md:px-12 grid grid-cols-1 md:grid-cols-3 gap-10">
+          <div>
+            <p className="display-caps text-2xl tracking-tight">Bakebook Bakery</p>
+            <p className="mt-4 text-sm text-foreground/60 max-w-xs leading-relaxed">
+              Small-batch cookies and cakes, made to order out of our Gurgaon kitchen.
+            </p>
+          </div>
+          <div>
+            <p className="editorial-label text-muted-foreground mb-3">Order</p>
+            <a
+              href="https://wa.me/919773889591"
+              target="_blank"
+              rel="noreferrer"
+              className="text-sm text-foreground/70 hover:text-bakebook-blue transition-colors inline-flex items-center gap-2"
+            >
+              <MessageCircle className="h-4 w-4" /> Message us on WhatsApp
+            </a>
+          </div>
+          <div>
+            <p className="editorial-label text-muted-foreground mb-3">Follow</p>
+            <p className="text-sm text-foreground/70">@bakebookbakery</p>
+          </div>
+        </div>
+      </footer>
+
+      {/* ---------------- Detail Overlay ---------------- */}
       {openId && activeProduct && (
         <div
           className={`fixed inset-0 z-[70] flex items-center justify-center p-4 md:p-10 transition-opacity duration-300 ${entered ? "opacity-100" : "opacity-0"}`}
@@ -701,14 +1092,20 @@ function CakeryPage() {
             </button>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-0">
-              {/* 3D cookie stage */}
+              {/* Stage: 3D for cookies, photo for cakes */}
               <div className="flex flex-col items-center justify-center bg-muted/60 p-6 md:p-10">
-                <div className="w-full h-[320px] md:h-[380px]">
-                  <CookieScene photoUrl={COOKIE_PHOTOS[activeProduct.id]} size={activeConfig.size} />
-                </div>
-                <p className="mt-4 editorial-label text-muted-foreground text-center">
-                  {activeConfig.size === "small" ? "Drag any cookie to spin it" : "Drag the cookie to spin it"}
-                </p>
+                {isCookie ? (
+                  <>
+                    <div className="w-full h-[320px] md:h-[380px]">
+                      <CookieScene productId={activeProduct.id} photoUrl={COOKIE_PHOTOS[activeProduct.id]} size={activeConfig.size} />
+                    </div>
+                    <p className="mt-4 editorial-label text-muted-foreground text-center">Drag the cookie to spin it</p>
+                  </>
+                ) : (
+                  <div className="w-full h-[320px] md:h-[380px] rounded-2xl overflow-hidden border border-border/40">
+                    <ProductPhoto src={activeProduct.image} alt={activeProduct.name} className="w-full h-full" />
+                  </div>
+                )}
               </div>
 
               {/* Details & controls */}
@@ -717,43 +1114,47 @@ function CakeryPage() {
                 <p className="mt-3 text-foreground/70 leading-relaxed">{activeProduct.description}</p>
 
                 <div className="mt-8 flex flex-col gap-5">
-                  <div>
-                    <div className="editorial-label text-muted-foreground mb-2">Size</div>
-                    <div className="inline-flex rounded-full bg-muted p-1 border border-border/50">
-                      {(["small", "medium", "large"] as const).map((s) => (
-                        <button
-                          key={s}
-                          onClick={() => patchConfig(activeProduct.id, { size: s })}
-                          className={`px-4 py-2 text-sm rounded-full transition-all ${
-                            activeConfig.size === s ? "bg-bakebook-blue text-background shadow-lg" : "text-foreground/70 hover:bg-muted"
-                          }`}
-                        >
-                          {s[0].toUpperCase() + s.slice(1)}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
+                  {isCookie && (
+                    <>
+                      <div>
+                        <div className="editorial-label text-muted-foreground mb-2">Size</div>
+                        <div className="inline-flex rounded-full bg-muted p-1 border border-border/50">
+                          {(["small", "medium", "large"] as const).map((s) => (
+                            <button
+                              key={s}
+                              onClick={() => patchConfig(activeProduct.id, { size: s })}
+                              className={`px-4 py-2 text-sm rounded-full transition-all ${
+                                activeConfig.size === s ? "bg-bakebook-blue text-background shadow-lg" : "text-foreground/70 hover:bg-muted"
+                              }`}
+                            >
+                              {s[0].toUpperCase() + s.slice(1)}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
 
-                  <div>
-                    <div className="editorial-label text-muted-foreground mb-2">Chocolate</div>
-                    <div className="inline-flex rounded-full bg-muted p-1 border border-border/50">
-                      {(["premium", "luxe"] as const).map((t) => (
-                        <button
-                          key={t}
-                          onClick={() => patchConfig(activeProduct.id, { tier: t })}
-                          className={`px-4 py-2 text-sm rounded-full transition-all ${
-                            activeConfig.tier === t
-                              ? t === "luxe"
-                                ? "bg-amber-600 text-background shadow-lg"
-                                : "bg-bakebook-blue text-background shadow-lg"
-                              : "text-foreground/70 hover:bg-muted"
-                          }`}
-                        >
-                          {t[0].toUpperCase() + t.slice(1)}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
+                      <div>
+                        <div className="editorial-label text-muted-foreground mb-2">Chocolate</div>
+                        <div className="inline-flex rounded-full bg-muted p-1 border border-border/50">
+                          {(["premium", "luxe"] as const).map((t) => (
+                            <button
+                              key={t}
+                              onClick={() => patchConfig(activeProduct.id, { tier: t })}
+                              className={`px-4 py-2 text-sm rounded-full transition-all ${
+                                activeConfig.tier === t
+                                  ? t === "luxe"
+                                    ? "bg-amber-600 text-background shadow-lg"
+                                    : "bg-bakebook-blue text-background shadow-lg"
+                                  : "text-foreground/70 hover:bg-muted"
+                              }`}
+                            >
+                              {t[0].toUpperCase() + t.slice(1)}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    </>
+                  )}
 
                   <div>
                     <div className="editorial-label text-muted-foreground mb-2">Quantity</div>
@@ -807,17 +1208,35 @@ function CakeryPage() {
   );
 }
 
-// ---- Preview card shown in the grid before a cookie is opened ----
-function CookiePreviewCard({
+/* ------------------------------------------------------------------ */
+/*  SHOP CARD — one card style for every category                      */
+/* ------------------------------------------------------------------ */
+
+function ShopCard({
   product,
   photoUrl,
   onOpen,
+  onQuickAdd,
 }: {
   product: Product;
-  photoUrl: string;
+  photoUrl?: string;
   onOpen: (e: MouseEvent) => void;
+  onQuickAdd?: () => void;
 }) {
   const [hovering, setHovering] = useState(false);
+  const [added, setAdded] = useState(false);
+  const isCookie = product.category === "Cookie";
+  const isCustom = product.category === "Custom";
+
+  const cardPhoto = photoUrl ?? product.image;
+
+  const handleQuickAdd = (e: MouseEvent) => {
+    e.stopPropagation();
+    if (!onQuickAdd) return;
+    onQuickAdd();
+    setAdded(true);
+    setTimeout(() => setAdded(false), 1400);
+  };
 
   return (
     <div
@@ -827,37 +1246,64 @@ function CookiePreviewCard({
       onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && onOpen(e as unknown as MouseEvent)}
       onMouseEnter={() => setHovering(true)}
       onMouseLeave={() => setHovering(false)}
-      className="group w-full max-w-[520px] mx-auto p-8 rounded-3xl bg-background border border-border/60 shadow-[0_10px_40px_rgba(2,6,23,0.04)] cursor-pointer transition-all duration-500 hover:shadow-[0_25px_60px_rgba(2,6,23,0.08)] focus:outline-none focus-visible:ring-4 focus-visible:ring-bakebook-blue/30"
+      className="group flex flex-col rounded-3xl bg-background border border-border/60 shadow-[0_10px_40px_rgba(2,6,23,0.04)] cursor-pointer transition-all duration-500 hover:shadow-[0_25px_60px_rgba(2,6,23,0.08)] focus:outline-none focus-visible:ring-4 focus-visible:ring-bakebook-blue/30 overflow-hidden"
       style={{ transform: hovering ? "translateY(-6px)" : "translateY(0)" }}
     >
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h3 className="font-display text-3xl tracking-tight">{product.name}</h3>
-          <p className="mt-2 text-sm text-foreground/70 max-w-lg">{product.description}</p>
-        </div>
-        <div className="text-right">
-          <div className="editorial-label text-muted-foreground">Starting</div>
-          <div className="display-caps text-2xl">₹{product.price}</div>
-        </div>
-      </div>
-
-      <div className="relative flex items-center justify-center p-6">
+      <div className="relative aspect-[4/3] overflow-hidden bg-muted">
+        <ProductPhoto
+          src={cardPhoto}
+          alt={product.name}
+          className="w-full h-full transition-transform duration-500 ease-[cubic-bezier(.2,.9,.25,1)]"
+        />
         <div
-          className="relative w-[220px] h-[220px] md:w-[260px] md:h-[260px] rounded-full overflow-hidden transition-transform duration-500 ease-[cubic-bezier(.2,.9,.25,1)]"
-          style={{
-            transform: hovering ? "rotate(-4deg) scale(1.04)" : "rotate(0deg) scale(1)",
-            boxShadow: hovering ? "0 25px 50px rgba(2,6,23,0.14)" : "0 14px 32px rgba(2,6,23,0.08)",
-          }}
-        >
-          <img src={photoUrl} alt={product.name} className="h-full w-full object-cover" draggable={false} />
-        </div>
+          className="absolute inset-0 transition-transform duration-500 ease-[cubic-bezier(.2,.9,.25,1)]"
+          style={{ transform: hovering ? "scale(1.05)" : "scale(1)" }}
+        />
+        {isCookie && (
+          <span className="absolute top-4 left-4 editorial-label bg-background/85 backdrop-blur px-3 py-1.5 rounded-full border border-border/40">
+            Customize in 3D
+          </span>
+        )}
       </div>
 
-      <div className="mt-4 flex items-center justify-between">
-        <p className="text-sm text-foreground/60">Click to pick it up and spin it in 3D.</p>
-        <span className="editorial-label text-bakebook-blue opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-          View →
-        </span>
+      <div className="flex flex-1 flex-col p-6">
+        <div className="flex items-start justify-between gap-3">
+          <h3 className="font-display text-2xl tracking-tight leading-tight">{product.name}</h3>
+          {!isCustom && (
+            <div className="text-right whitespace-nowrap">
+              <div className="editorial-label text-muted-foreground">{isCookie ? "From" : "Price"}</div>
+              <div className="display-caps text-xl">₹{product.price}</div>
+            </div>
+          )}
+        </div>
+        <p className="mt-2 text-sm text-foreground/60 leading-relaxed flex-1">{product.description}</p>
+
+        <div className="mt-5 flex items-center justify-between">
+          {onQuickAdd ? (
+            <button
+              onClick={handleQuickAdd}
+              disabled={added}
+              className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-medium transition-colors ${
+                added ? "bg-foreground text-background" : "bg-bakebook-blue text-background hover:bg-bakebook-ink"
+              }`}
+            >
+              {added ? (
+                <>
+                  <Check className="h-3.5 w-3.5" /> Added
+                </>
+              ) : (
+                <>
+                  <ShoppingBag className="h-3.5 w-3.5" /> Add to Bag
+                </>
+              )}
+            </button>
+          ) : (
+            <span className="text-sm text-foreground/50">{isCustom ? "Chat with us to start" : "Click to pick it up and spin it in 3D."}</span>
+          )}
+          <span className="editorial-label text-bakebook-blue opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap">
+            {isCustom ? "Message →" : "View →"}
+          </span>
+        </div>
       </div>
     </div>
   );

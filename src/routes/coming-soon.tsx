@@ -25,7 +25,7 @@ function ComingSoonPage() {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const targetProgress = useRef(0);
   const displayProgress = useRef(0);
-  const rafId = useRef<number>();
+  const rafId = useRef<number | undefined>(undefined);
   const [renderedProgress, setRenderedProgress] = useState(0);
 
   const [size, setSize] = useState({ width: 0, height: 0 });

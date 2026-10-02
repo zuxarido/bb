@@ -67,30 +67,30 @@ const CATEGORIES = [
 
 export function OurProductsSection() {
   return (
-    <section className="bg-background py-24 md:py-36 border-t border-border">
-      <div className="mx-auto max-w-[1600px] px-6 md:px-10 lg:px-12">
+    <section className="bg-background py-16 sm:py-24 md:py-36 border-t border-border">
+      <div className="mx-auto max-w-[1600px] px-5 sm:px-8 md:px-10 lg:px-12">
         
-        <div className="grid grid-cols-1 lg:grid-cols-[1.1fr_2fr] gap-12 lg:gap-20 items-start">
+        <div className="grid grid-cols-1 lg:grid-cols-[1.1fr_2fr] gap-10 sm:gap-12 lg:gap-20 items-start">
           
           {/* STATIC / STICKY LEFT COLUMN */}
-          <div className="lg:sticky lg:top-28 space-y-6">
+          <div className="lg:sticky lg:top-28 space-y-4 sm:space-y-6">
             <ScrollReveal variant="fade-up">
               <span className="editorial-label text-bakebook-blue font-medium">
                 — OUR PRODUCTS
               </span>
-              <h2 className="mt-3 font-display text-4xl sm:text-6xl lg:text-7xl font-medium uppercase leading-[0.9] tracking-[-0.03em] text-foreground">
-                OUR<br />PRODUCTS.
+              <h2 className="mt-2 sm:mt-3 font-display text-3xl xs:text-4xl sm:text-6xl lg:text-7xl font-medium uppercase leading-[0.9] tracking-[-0.03em] text-foreground">
+                OUR<br className="hidden sm:inline" /> PRODUCTS.
               </h2>
             </ScrollReveal>
 
             <ScrollReveal variant="fade-up" delay={100}>
-              <p className="text-sm md:text-base text-muted-foreground font-light leading-relaxed max-w-sm">
+              <p className="text-xs sm:text-base text-muted-foreground font-light leading-relaxed max-w-sm">
                 Explore the core sections of our Delhi bakery & cafe — from 72-hour sourdough to bespoke cakes and specialty coffee.
               </p>
             </ScrollReveal>
 
             <ScrollReveal variant="fade-up" delay={200}>
-              <div className="pt-2">
+              <div className="pt-1 sm:pt-2">
                 <Link
                   to="/cakery"
                   className="poilane-link editorial-label text-xs tracking-[0.16em] font-semibold text-foreground hover:text-bakebook-blue"
@@ -101,8 +101,8 @@ export function OurProductsSection() {
             </ScrollReveal>
           </div>
 
-          {/* RIGHT COLUMN: SCROLLING GRID OF 2 */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 md:gap-8">
+          {/* RIGHT COLUMN: responsive grid */}
+          <div className="grid grid-cols-2 gap-3 sm:gap-6 md:gap-8">
             {CATEGORIES.map((cat, idx) => (
               <ScrollReveal
                 key={cat.id}
@@ -111,39 +111,35 @@ export function OurProductsSection() {
               >
                 <Link
                   to={cat.link}
-                  className="group flex flex-col justify-between overflow-hidden rounded-[20px] border border-border/80 bg-background p-5 transition-all duration-300 hover:-translate-y-1.5 hover:border-bakebook-blue/40 hover:shadow-lg"
+                  className="group flex h-full flex-col justify-between overflow-hidden rounded-2xl border border-border/80 bg-background p-3 sm:p-5 transition-all duration-300 hover:-translate-y-1 hover:border-bakebook-blue/40 hover:shadow-lg active:scale-[0.98]"
                 >
-                  {/* Category Image */}
-                  <div className="relative aspect-[4/3] w-full overflow-hidden rounded-[14px] bg-muted">
-                    <img
-                      src={cat.img}
-                      alt={cat.title}
-                      className="h-full w-full object-cover editorial-image-zoom"
-                      loading="lazy"
-                    />
-                    <div className="absolute top-3 left-3 rounded-full bg-background/90 px-2.5 py-0.5 text-[9px] font-bold text-foreground backdrop-blur-md shadow-xs">
-                      {cat.number}
+                  <div>
+                    {/* Category Image */}
+                    <div className="relative aspect-[4/3] w-full overflow-hidden rounded-xl bg-muted">
+                      <img
+                        src={cat.img}
+                        alt={cat.title}
+                        className="h-full w-full object-cover editorial-image-zoom"
+                        loading="lazy"
+                      />
+                      <div className="absolute top-2 left-2 rounded-full bg-background/90 px-2 py-0.5 text-[9px] font-bold text-foreground backdrop-blur-md">
+                        {cat.number}
+                      </div>
+                    </div>
+
+                    {/* Details */}
+                    <div className="mt-3 space-y-0.5">
+                      <h3 className="font-display text-[13px] sm:text-xl font-medium tracking-tight text-foreground transition-colors group-hover:text-bakebook-blue leading-snug">
+                        {cat.title}
+                      </h3>
+                      <p className="text-[10px] sm:text-[11px] text-muted-foreground font-light">
+                        {cat.subtag}
+                      </p>
                     </div>
                   </div>
 
-                  {/* Details */}
-                  <div className="mt-5 space-y-1">
-                    <h3 className="font-display text-xl font-medium tracking-tight text-foreground transition-colors group-hover:text-bakebook-blue">
-                      {cat.title}
-                    </h3>
-                    <p className="text-[11px] text-muted-foreground font-light">
-                      {cat.subtag}
-                    </p>
-                    <p className="text-xs text-muted-foreground leading-relaxed pt-1 font-light line-clamp-2">
-                      {cat.description}
-                    </p>
-                  </div>
-
-                  {/* Minimal Link */}
-                  <div className="mt-6 pt-3 border-t border-border/60 flex items-center justify-between text-[10px]">
-                    <span className="editorial-label text-muted-foreground text-[9px]">
-                      Section
-                    </span>
+                  {/* Link */}
+                  <div className="mt-3 pt-2 border-t border-border/60 flex items-center justify-end text-[9px] sm:text-[10px]">
                     <span className="poilane-link font-semibold text-foreground group-hover:text-bakebook-blue">
                       Explore →
                     </span>

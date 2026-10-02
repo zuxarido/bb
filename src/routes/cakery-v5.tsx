@@ -387,7 +387,7 @@ function CakeryPageV5() {
       {/* ─── CART SHEET ──────────────────────────────────────────────────── */}
       <Sheet open={isCartOpen} onOpenChange={setIsCartOpen}>
         <SheetContent
-          className="flex w-full flex-col sm:max-w-md p-0 border-l border-[#0a0a0a]/10 overflow-hidden"
+          className="flex w-[70vw] flex-col sm:max-w-md p-0 border-l border-[#0a0a0a]/10 overflow-hidden"
           style={{ backgroundColor: "#f0f1f1" }}
         >
           <SheetHeader className="border-b border-[#0a0a0a]/10 px-8 py-8">
